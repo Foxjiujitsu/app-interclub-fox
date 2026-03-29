@@ -5,7 +5,7 @@ import pandas as pd
 # Configuración FOX
 st.set_page_config(page_title="INTERCLUB FOX", page_icon="🦊", layout="centered")
 
-# --- DISEÑO CORPORATIVO NEGRO Y NARANJA ---
+# --- DISEÑO CORPORATIVO NEGRO Y NARANJA MEJORADO ---
 st.markdown("""
     <style>
     /* Fondo principal en negro */
@@ -49,28 +49,33 @@ st.markdown("""
     input, select, textarea {
         background-color: #1A1A1A !important;
         color: white !important;
-        border: 1px solid #333333 !important;
+        border: 1px solid #FF6B00 !important; /* CORRECCIÓN: Bordes Naranjas */
     }
 
     /* El contenedor del formulario */
     [data-testid="stForm"] {
-        border: 1px solid #FF6B00;
+        border: 2px solid #FF6B00; /* CORRECCIÓN: Borde Naranja */
         border-radius: 15px;
         background-color: #0A0A0A;
+        padding: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- CABECERA ---
-# Ajustamos logos para que se vean bien sobre fondo negro
-col1, col2 = st.columns([1, 2])
-with col1:
-    st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=120)
-with col2:
-    st.image("fox-letras-naranja.PNG", width=220)
+# --- CABECERA CENTRADA Y LOGOS GRANDES ---
+# Usamos columnas para forzar el centrado
+col_main, col_fix = st.columns([1, 10]) # Pequeño desajuste para centrado óptimo
 
-st.markdown("<h1 style='text-align: center; color: #FF6B00;'>INTERCLUB FOX</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 18px;'>Registro Oficial de Competidores</p>", unsafe_allow_html=True)
+with col_fix:
+    # 1. El dibujo del zorro centrado (Imagen de WhatsApp...)
+    st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=180) # Centrado y grande
+    
+    # 2. El logo de letras FOX más grande (fox-letras-naranja...)
+    st.image("fox-letras-naranja.PNG", width=350) # Muy grande
+
+# 3. Título Centrado: Solo "INTERCLUB"
+st.markdown("<h1 style='text-align: center; color: #FF6B00; font-size: 40px;'>INTERCLUB</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 20px; color: white;'>Registro Oficial de Competidores</p>", unsafe_allow_html=True)
 
 # --- PESTAÑAS ---
 tab1, tab2, tab3 = st.tabs(["📝 Inscripción", "⚔️ Cruces", "🏆 Resultados"])
