@@ -2,83 +2,111 @@ import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# --- CONFIGURACIÓN ---
+# --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="INTERCLUB FOX", page_icon="🦊", layout="centered")
 
-# --- CSS PROFESIONAL "ANTI-ERRORES" ---
+# --- CSS RADICAL Y DEFINITIVO ---
 st.markdown("""
     <style>
-    /* 1. Fondo y Base */
-    .stApp { background-color: #000000; color: #FFFFFF; }
+    /* 1. Fondo y Textos Base */
+    .stApp { background-color: #000000 !important; color: #FFFFFF !important; }
     
-    /* 2. OCULTAR ICONOS DE STREAMLIT (GitHub y Enlaces) */
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    .css-15zrgzn {display: none;}
-    a.viewerBadge_container__1QS13 {display: none;}
-    button.StyledFullScreenButton {display: none;}
-    .element-container:has(#acceso-interclub) a { display: none; }
+    /* 2. OCULTAR ELEMENTOS INNECESARIOS */
+    #MainMenu, header, footer {visibility: hidden;}
+    .stDeployButton {display:none;}
 
-    /* 3. CENTRADO TOTAL DE LOGOS */
-    .stImage { display: flex; justify-content: center; }
-    .stImage img { margin: 0 auto; }
+    /* 3. CENTRADO ABSOLUTO DE LOGOS */
+    /* Este bloque fuerza a que cualquier imagen o bloque de imagen se centre sí o sí */
+    [data-testid="stImage"], .stImage, [data-testid="stVerticalBlock"] > div:has(img) {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        text-align: center !important;
+        width: 100% !important;
+    }
+    .stImage img {
+        display: block !important;
+        margin: 0 auto !important;
+    }
 
-    /* 4. TEXTOS (Blanco Puro y legibles) */
-    label, p, .stMarkdown p {
+    /* 4. TEXTOS DE ETIQUETAS (Usuario, Contraseña...) */
+    /* Forzamos blanco puro para que no salgan grises */
+    label, .stMarkdown p, [data-testid="stWidgetLabel"] p {
         color: #FFFFFF !important;
         font-weight: bold !important;
         font-size: 1.1rem !important;
+        opacity: 1 !important;
     }
 
-    /* 5. INPUTS (Borde único naranja, sin sombras) */
+    /* 5. INPUTS (Corrección de doble línea y color) */
     .stTextInput input, .stPasswordInput input {
         background-color: #1A1A1A !important;
         color: #FFFFFF !important;
         border: 2px solid #FF6B00 !important;
         border-radius: 10px !important;
-        box-shadow: none !important; /* Quita el doble color */
+        /* Eliminamos sombras internas que crean el efecto de doble línea */
+        box-shadow: none !important;
+        -webkit-appearance: none !important;
     }
 
-    /* 6. BOTÓN INICIAR SESIÓN (Naranja con letras negras) */
-    div.stButton > button:first-child {
+    /* 6. BOTÓN INICIAR SESIÓN (EL FALLO MÁS REPETIDO) */
+    /* Atacamos directamente el botón de formulario de Streamlit */
+    button[kind="primaryFormSubmit"], .stButton > button {
         background-color: #FF6B00 !important;
         color: #000000 !important;
         border: none !important;
-        font-weight: bold !important;
+        font-weight: 900 !important;
         font-size: 1.2rem !important;
-        height: 3em !important;
+        height: 3.5em !important;
         width: 100% !important;
+        opacity: 1 !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
-    div.stButton > button:hover {
-        background-color: #FFFFFF !important;
-        color: #FF6B00 !important;
+    
+    /* Forzamos que el texto dentro del botón sea NEGRO */
+    button[kind="primaryFormSubmit"] p, .stButton > button p {
+        color: #000000 !important;
+        font-weight: 900 !important;
     }
 
-    /* 7. BOTÓN REGISTRO (Diseño más elegante) */
+    /* 7. BOTÓN REGISTRO (Abajo del formulario) */
     [data-testid="stForm"] + div .stButton button {
-        background-color: transparent !important;
-        color: #FF6B00 !important;
-        border: 2px solid #FF6B00 !important;
-        margin-top: 20px;
+        background-color: #FF6B00 !important;
+        color: #000000 !important;
+        border: none !important;
+        margin-top: 20px !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- CONTENIDO ---
-# Centramos logos manualmente para asegurar
+# --- CABECERA DE LOGOS ---
+# Usamos un contenedor vacío para ayudar al centrado
+st.write("") 
 st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=150)
-st.image("fox-letras-naranja.PNG", width=300)
+st.image("fox-letras-naranja.PNG", width=350)
 
-st.markdown("<h1 id='acceso-interclub' style='text-align: center; color: white;'>Acceso Interclub</h1>", unsafe_allow_html=True)
+# Título centrado sin icono de enlace
+st.markdown("<h1 style='text-align: center; color: white; margin-top: -10px;'>Acceso Interclub</h1>", unsafe_allow_html=True)
 
-with st.form("login"):
-    user = st.text_input("Usuario o Email")
-    pwd = st.text_input("Contraseña", type="password")
+# --- FORMULARIO ---
+if 'autenticado' not in st.session_state:
+    st.session_state['autenticado'] = False
+
+with st.form("login_oficial"):
+    u = st.text_input("Usuario o Email")
+    p = st.text_input("Contraseña", type="password")
     submit = st.form_submit_button("INICIAR SESIÓN")
     
     if submit:
-        # Aquí iría tu lógica de login
-        st.write("Validando...")
+        if u == "Fox-Interclub" and p == "Interclub-Fox-2026":
+            st.session_state['autenticado'] = True
+            st.success("Acceso concedido")
+        else:
+            st.error("Credenciales incorrectas")
 
+# --- BOTÓN REGISTRO ---
 st.button("¿AÚN NO ESTÁS INSCRITO? REGÍSTRATE AQUÍ")
