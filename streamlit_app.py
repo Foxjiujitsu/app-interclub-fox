@@ -10,7 +10,7 @@ DB_FILE = "competidores.csv"
 def cargar_datos():
     if os.path.exists(DB_FILE):
         return pd.read_csv(DB_FILE)
-    return pd.DataFrame(columns=["Número", "Nombre", "Cinturón", "Peso", "Edad", "Estilo", "Club", "Resultado"])
+    return pd.DataFrame(columns=["Número", "Nombre", "Cinturón", "Peso", "Edad", "Club"])
 
 def guardar_datos(df):
     df.to_csv(DB_FILE, index=False)
@@ -21,47 +21,55 @@ if 'df' not in st.session_state:
 if 'active_tab' not in st.session_state:
     st.session_state.active_tab = "INICIO"
 
-# --- DISEÑO MÓVIL CENTRADO Y SIMÉTRICO ---
+# --- DISEÑO MÓVIL CENTRADO TOTAL ---
 st.markdown("""
     <style>
-    /* Fondo Blanco */
+    /* Fondo Blanco y reseteo de márgenes */
     .stApp { background-color: #FFFFFF; color: #333333; }
     
-    /* Centrar todo el contenido */
-    .block-container {
+    /* Forzar centrado de la columna principal */
+    .main .block-container {
+        max-width: 400px; /* Ancho típico de un móvil */
+        margin: 0 auto;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        padding-top: 20px !important;
+        padding-top: 30px !important;
     }
 
-    /* Contenedor del Logo */
-    .logo-container { text-align: center; margin-bottom: 20px; width: 100%; }
+    /* Logo centrado */
+    .logo-container { 
+        text-align: center; 
+        margin-bottom: 25px; 
+        width: 100%; 
+    }
     .logo-img { width: 220px; }
 
-    /* Estilo de Botones IGUALES y CENTRADOS */
-    div.stButton {
-        display: flex;
-        justify-content: center;
-        width: 100%;
+    /* Contenedor de botones centrado */
+    .element-container, .stButton {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
     }
 
+    /* Botones Simétricos y sin Iconos */
     div.stButton > button {
         background-color: #ffffff !important;
         color: #333333 !important;
         border: 1.5px solid #666666 !important;
         border-radius: 25px !important;
         
-        /* MEDIDAS FIJAS PARA SIMETRÍA */
-        width: 300px !important; 
-        height: 45px !important;
+        /* MEDIDAS FIJAS */
+        width: 280px !important; 
+        height: 48px !important;
         
         font-weight: bold !important;
-        font-size: 13px !important;
+        font-size: 14px !important;
         text-transform: uppercase;
-        margin-bottom: 8px !important;
-        transition: all 0.3s;
+        margin-bottom: 5px !important;
+        display: block !important;
+        transition: all 0.2s;
     }
     
     div.stButton > button:hover {
@@ -76,7 +84,7 @@ st.markdown("""
         font-size: 20px;
         font-weight: bold;
         text-align: center;
-        margin: 15px 0;
+        margin: 10px 0;
     }
 
     /* Ocultar elementos de Streamlit */
@@ -96,20 +104,19 @@ st.markdown(f"""
 
 df = st.session_state.df
 
-# --- MENÚ DE BOTONES (CENTRADO) ---
+# --- MENÚ DE BOTONES (SIN ICONOS Y CENTRADOS) ---
 if st.session_state.active_tab == "INICIO":
-    # Usamos botones simples, el CSS se encarga de centrarlos y darles el tamaño fijo
-    if st.button("📝 REGISTRO DE COMPETIDORES"): st.session_state.active_tab = "REGISTRO"
-    if st.button("👶 COMPETIDORES INFANTILES"): st.session_state.active_tab = "INFANTILES"
-    if st.button("🥷 COMPETIDORES ADULTOS"): st.session_state.active_tab = "ADULTOS"
-    if st.button("🔗 EMPAREJAMIENTOS INFANTILES"): st.session_state.active_tab = "EMP_INF"
-    if st.button("⛓️ EMPAREJAMIENTOS ADULTOS"): st.session_state.active_tab = "EMP_ADU"
-    if st.button("🏆 RESULTADOS INFANTILES"): st.session_state.active_tab = "RES_INF"
-    if st.button("🥇 RESULTADOS ADULTOS"): st.session_state.active_tab = "RES_ADU"
+    if st.button("REGISTRO DE COMPETIDORES"): st.session_state.active_tab = "REGISTRO"
+    if st.button("COMPETIDORES INFANTILES"): st.session_state.active_tab = "INFANTILES"
+    if st.button("COMPETIDORES ADULTOS"): st.session_state.active_tab = "ADULTOS"
+    if st.button("EMPAREJAMIENTOS INFANTILES"): st.session_state.active_tab = "EMP_INF"
+    if st.button("EMPAREJAMIENTOS ADULTOS"): st.session_state.active_tab = "EMP_ADU"
+    if st.button("RESULTADOS INFANTILES"): st.session_state.active_tab = "RES_INF"
+    if st.button("RESULTADOS ADULTOS"): st.session_state.active_tab = "RES_ADU"
 
 # --- LÓGICA DE SECCIONES ---
 else:
-    if st.button("⬅️ VOLVER AL MENÚ"):
+    if st.button("VOLVER AL MENÚ"):
         st.session_state.active_tab = "INICIO"
         st.rerun()
     
@@ -134,12 +141,12 @@ else:
         es_inf = st.session_state.active_tab == "INFANTILES"
         filt = df[df['Edad'] <= 12] if es_inf else df[df['Edad'] > 12]
         st.markdown(f"<div class='section-title'>LISTADO {'INFANTIL' if es_inf else 'ADULTO'}</div>", unsafe_allow_html=True)
-        st.dataframe(filt[["Número", "Nombre", "Cinturón", "Peso", "Club"]], use_container_width=True, hide_index=True)
+        st.dataframe(filt, use_container_width=True, hide_index=True)
 
     elif st.session_state.active_tab in ["EMP_INF", "EMP_ADU", "RES_INF", "RES_ADU"]:
         st.markdown("<div class='section-title'>GESTIÓN DE DATOS</div>", unsafe_allow_html=True)
         ed_df = st.data_editor(df, use_container_width=True, hide_index=True)
-        if st.button("💾 GUARDAR CAMBIOS"):
+        if st.button("GUARDAR CAMBIOS"):
             st.session_state.df = ed_df
             guardar_datos(ed_df)
             st.success("Guardado")
