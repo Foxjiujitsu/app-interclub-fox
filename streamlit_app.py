@@ -17,7 +17,6 @@ def cargar_datos(archivo, columnas):
 def guardar_datos(df, archivo):
     df.to_csv(archivo, index=False)
 
-# Inicializar estados
 if 'df' not in st.session_state:
     st.session_state.df = cargar_datos(DB_FILE, ["Número", "Nombre", "Cinturón", "Peso", "Edad", "Estilo", "Club"])
 if 'luchas' not in st.session_state:
@@ -30,21 +29,21 @@ if 'active_tab' not in st.session_state:
 st.markdown("""
     <style>
     .stApp { background-color: #FFFFFF; color: #333333; }
-    .main .block-container { max-width: 800px; margin: 0 auto; padding-top: 20px !important; }
-    .logo-container { text-align: center; margin-bottom: 20px; width: 100%; }
+    .main .block-container { max-width: 950px; margin: 0 auto; padding-top: 10px !important; }
+    .logo-container { text-align: center; margin-bottom: 10px; width: 100%; }
     div.stButton > button {
         background-color: #ffffff !important; color: #333333 !important;
         border: 1.5px solid #666666 !important; border-radius: 25px !important;
-        width: 320px !important; height: 46px !important;
-        font-weight: bold !important; font-size: 13px !important;
-        text-transform: uppercase; margin-bottom: 4px !important;
+        width: 280px !important; height: 42px !important;
+        font-weight: bold !important; font-size: 12px !important;
+        text-transform: uppercase; margin-bottom: 2px !important;
     }
     div.stButton > button:hover { border-color: #ff6b00 !important; color: #ff6b00 !important; }
-    .section-title { color: #ff6b00; font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 15px; }
+    .section-title { color: #ff6b00; font-size: 18px; font-weight: bold; text-align: center; }
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown(f"""<div class="logo-container"><img src="https://raw.githubusercontent.com/Foxjiujitsu/app-interclub-fox/main/fox-letras-naranja.PNG" width="220"><br><b>SISTEMA DE COMPETICIÓN</b></div>""", unsafe_allow_html=True)
+st.markdown(f"""<div class="logo-container"><img src="https://raw.githubusercontent.com/Foxjiujitsu/app-interclub-fox/main/fox-letras-naranja.PNG" width="180"><br><b>SISTEMA DE COMPETICIÓN</b></div>""", unsafe_allow_html=True)
 
 # --- ALGORITMO DE EMPAREJAMIENTO ---
 def generar_emparejamientos(df_filtrado, es_infantil):
@@ -69,9 +68,9 @@ def generar_emparejamientos(df_filtrado, es_infantil):
                         min_dif_peso = dif_peso
                         mejor_oponente = c2
         
-        ficha1 = f"{c1['Cinturón']} | {c1['Estilo']} | {c1['Club']}"
+        ficha1 = f"{c1['Cinturón']} | {c1['Estilo']} | {c1['Peso']}kg | {c1['Club']}"
         if mejor_oponente:
-            ficha2 = f"{mejor_oponente['Cinturón']} | {mejor_oponente['Estilo']} | {mejor_oponente['Club']}"
+            ficha2 = f"{mejor_oponente['Cinturón']} | {mejor_oponente['Estilo']} | {mejor_oponente['Peso']}kg | {mejor_oponente['Club']}"
             luchas.append({"ID": len(luchas)+1, "Luchador_1": c1['Nombre'], "Ficha_1": ficha1, "VS": "VS", "Luchador_2": mejor_oponente['Nombre'], "Ficha_2": ficha2, "Categoría": cat_nombre, "Resultado_Final": "Pendiente"})
             ya_emparejados.add(c1['Nombre'])
             ya_emparejados.add(mejor_oponente['Nombre'])
@@ -88,13 +87,58 @@ if st.session_state.active_tab == "INICIO":
             st.session_state.active_tab = op
             st.rerun()
 else:
-    if st.button("⬅️ VOLVER AL MENÚ"):
+    if st.button("VOLVER AL MENÚ"):
         st.session_state.active_tab = "INICIO"
         st.rerun()
     st.markdown("---")
 
-    # REGISTRO
-    if st.session_state.active_tab == "REGISTRO DE COMPETIDORES":
+    # EMPAREJAMIENTOS CON DESPLEGABLES INTELIGENTES
+    if "EMPAREJAMIENTOS" in st.session_state.active_tab:
+        es_inf = "INFANTILES" in st.session_state.active_tab
+        cat = "Infantil" if es_inf else "Adulto"
+        st.markdown(f"<div class='section-title'>COMBATES {cat.upper()}</div>", unsafe_allow_html=True)
+        
+        if st.button("🔄 GENERAR AUTOMÁTICO"):
+            df_f = st.session_state.df[st.session_state.df['Edad'] <= 12] if es_inf else st.session_state.df[st.session_state.df['Edad'] > 12]
+            st.session_state.luchas = generar_emparejamientos(df_f, es_inf)
+
+        luchas_cat = st.session_state.luchas[st.session_state.luchas['Categoría'] == cat].copy()
+        
+        # Obtener lista de todos los nombres para el desplegable (solo los que no tienen pareja)
+        luchadores_ocupados = set(luchas_cat[luchas_cat['Luchador_2'] != "---"]['Luchador_2'].tolist())
+        todos_nombres = ["---"] + [n for n in st.session_state.df['Nombre'].tolist() if n not in luchadores_ocupados]
+
+        # EDITOR DE TABLA CON DESPLEGABLE
+        edit_l = st.data_editor(
+            luchas_cat,
+            column_config={
+                "Luchador_2": st.column_config.SelectboxColumn(
+                    "Contrincante",
+                    options=todos_nombres,
+                    help="Elige un luchador disponible"
+                ),
+                "Ficha_1": st.column_config.TextColumn("Ficha Luchador 1", disabled=True),
+                "Ficha_2": st.column_config.TextColumn("Ficha Luchador 2")
+            },
+            use_container_width=True,
+            hide_index=True,
+            num_rows="dynamic"
+        )
+
+        if st.button("💾 GUARDAR COMBATES"):
+            # Actualizar fichas automáticamente si se cambió el luchador 2 manualmente
+            for i, row in edit_l.iterrows():
+                if row['Luchador_2'] != "---":
+                    datos_l2 = st.session_state.df[st.session_state.df['Nombre'] == row['Luchador_2']].iloc[0]
+                    edit_l.at[i, 'Ficha_2'] = f"{datos_l2['Cinturón']} | {datos_l2['Estilo']} | {datos_l2['Peso']}kg | {datos_l2['Club']}"
+
+            otras = st.session_state.luchas[st.session_state.luchas['Categoría'] != cat]
+            st.session_state.luchas = pd.concat([otras, edit_l], ignore_index=True)
+            guardar_datos(st.session_state.luchas, LUC_FILE)
+            st.success("Combates actualizados")
+
+    # REGISTRO Y RESTO DE SECCIONES (IGUAL QUE ANTES)
+    elif st.session_state.active_tab == "REGISTRO DE COMPETIDORES":
         with st.form("reg"):
             n = st.text_input("Nombre")
             c = st.selectbox("Cinturón", ["Blanco", "Gris", "Amarillo", "Naranja", "Verde", "Azul", "Morado", "Marrón", "Negro"])
@@ -107,61 +151,26 @@ else:
                 st.session_state.df = pd.concat([st.session_state.df, nueva], ignore_index=True)
                 guardar_datos(st.session_state.df, DB_FILE)
                 st.success("Registrado")
-
-    # LISTADOS
-    elif st.session_state.active_tab in ["COMPETIDORES INFANTILES", "COMPETIDORES ADULTOS"]:
+    
+    elif "RESULTADOS" in st.session_state.active_tab:
+        es_inf = "INFANTILES" in st.session_state.active_tab
+        cat = "Infantil" if es_inf else "Adulto"
+        l_res = st.session_state.luchas[st.session_state.luchas['Categoría'] == cat]
+        res_edit = st.data_editor(l_res[["Luchador_1", "Luchador_2", "Resultado_Final"]], use_container_width=True, hide_index=True)
+        if st.button("💾 GUARDAR PODIO"):
+             otras = st.session_state.luchas[st.session_state.luchas['Categoría'] != cat]
+             # Fusionar resultados con el dataframe original de luchas
+             l_res.update(res_edit)
+             st.session_state.luchas = pd.concat([otras, l_res], ignore_index=True)
+             guardar_datos(st.session_state.luchas, LUC_FILE)
+             st.success("Resultados actualizados")
+             
+    elif "COMPETIDORES" in st.session_state.active_tab:
         es_inf = "INFANTILES" in st.session_state.active_tab
         filt = st.session_state.df[st.session_state.df['Edad'] <= 12] if es_inf else st.session_state.df[st.session_state.df['Edad'] > 12]
-        st.markdown(f"<div class='section-title'>{st.session_state.active_tab}</div>", unsafe_allow_html=True)
         edit = st.data_editor(filt, use_container_width=True, hide_index=True, num_rows="dynamic")
         if st.button("💾 GUARDAR LISTA"):
             otros = st.session_state.df[st.session_state.df['Edad'] > 12] if es_inf else st.session_state.df[st.session_state.df['Edad'] <= 12]
             st.session_state.df = pd.concat([otros, edit], ignore_index=True)
             guardar_datos(st.session_state.df, DB_FILE)
-            st.success("Guardado")
-
-    # EMPAREJAMIENTOS
-    elif st.session_state.active_tab in ["EMPAREJAMIENTOS INFANTILES", "EMPAREJAMIENTOS ADULTOS"]:
-        es_inf = "INFANTILES" in st.session_state.active_tab
-        cat = "Infantil" if es_inf else "Adulto"
-        if st.button("🔄 GENERAR AUTOMÁTICO"):
-            df_f = st.session_state.df[st.session_state.df['Edad'] <= 12] if es_inf else st.session_state.df[st.session_state.df['Edad'] > 12]
-            st.session_state.luchas = generar_emparejamientos(df_f, es_inf)
-        
-        filt_luchas = st.session_state.luchas[st.session_state.luchas['Categoría'] == cat]
-        edit_l = st.data_editor(filt_luchas, use_container_width=True, hide_index=True, num_rows="dynamic")
-        if st.button("💾 GUARDAR COMBATES"):
-            otras = st.session_state.luchas[st.session_state.luchas['Categoría'] != cat]
-            st.session_state.luchas = pd.concat([otras, edit_l], ignore_index=True)
-            guardar_datos(st.session_state.luchas, LUC_FILE)
-            st.success("Combates fijados")
-
-    # RESULTADOS (Aquí está lo que pedías)
-    elif st.session_state.active_tab in ["RESULTADOS INFANTILES", "RESULTADOS ADULTOS"]:
-        es_inf = "INFANTILES" in st.session_state.active_tab
-        cat = "Infantil" if es_inf else "Adulto"
-        st.markdown(f"<div class='section-title'>PODIO {cat.upper()}</div>", unsafe_allow_html=True)
-        
-        # Filtramos las luchas guardadas para esta categoría
-        luchas_res = st.session_state.luchas[st.session_state.luchas['Categoría'] == cat]
-        
-        if luchas_res.empty:
-            st.warning("Primero debes generar y guardar los emparejamientos.")
-        else:
-            st.info("Escribe en 'Resultado_Final': 1º Nombre, 2º Nombre o Empate")
-            # Mostramos la tabla con los nombres, fichas y la casilla para el resultado
-            res_final = st.data_editor(
-                luchas_res[["Luchador_1", "Ficha_1", "VS", "Luchador_2", "Ficha_2", "Resultado_Final"]], 
-                use_container_width=True, 
-                hide_index=True
-            )
-            
-            if st.button("💾 GUARDAR RESULTADOS"):
-                # Actualizamos el dataframe global de luchas
-                otras = st.session_state.luchas[st.session_state.luchas['Categoría'] != cat]
-                # Recuperamos la columna Categoría que quitamos para la vista limpia
-                res_final['Categoría'] = cat
-                res_final['ID'] = range(1, len(res_final) + 1)
-                st.session_state.luchas = pd.concat([otras, res_final], ignore_index=True)
-                guardar_datos(st.session_state.luchas, LUC_FILE)
-                st.success("¡Resultados guardados con éxito!")
+            st.success("Lista guardada")
