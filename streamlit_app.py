@@ -5,143 +5,129 @@ import pandas as pd
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="FOX INTERCLUB", page_icon="🦊", layout="centered")
 
-# --- DISEÑO CLONADO 100% (ESTILO CLARO / PREMIUM) ---
+# --- DISEÑO ULTRA-COMPACTO (ANTI-SCROLL) ---
 st.markdown("""
     <style>
-    /* 1. Fondo General (Gris muy claro/Blanco) */
+    /* 1. Fondo y Base */
     .stApp { 
         background-color: #F2F2F2; 
         color: #333333; 
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+        overflow: hidden; /* Evita el scroll global si es posible */
     }
     
-    /* 2. Ocultar elementos de Streamlit */
+    /* Ocultar elementos innecesarios para ganar espacio */
     header, footer, #MainMenu {visibility: hidden;}
+    .stDeployButton {display:none;}
+    
+    /* Reducir el padding superior de la app */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 0rem !important;
+    }
 
-    /* 3. Contenedor de Logos Centrados */
-    .header-fox-premium {
+    /* 2. Contenedor de Logos Compacto */
+    .header-compact {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        width: 100%;
-        margin-bottom: 30px;
-        padding-top: 20px;
+        margin-bottom: 5px;
     }
 
-    /* 4. Título 'Acceso Interclub' en Negro */
-    .titulo-negro {
+    /* 3. Título pequeño */
+    .titulo-mini {
         text-align: center;
         color: #1A1A1A !important;
-        font-size: 32px;
+        font-size: 22px;
         font-weight: 800;
-        margin-bottom: 25px;
+        margin-bottom: 10px;
     }
 
-    /* 5. Etiquetas de Input (Usuario/Contraseña) en Gris Oscuro */
-    label, [data-testid="stWidgetLabel"] p {
-        color: #444444 !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
-        margin-bottom: 8px !important;
-    }
-
-    /* 6. Inputs Blancos con Sombra Suave (Efecto Imagen) */
+    /* 4. Inputs más bajos (Compactos) */
     .stTextInput input, .stPasswordInput input {
         background-color: #FFFFFF !important;
-        color: #333333 !important;
-        border: 1px solid #E0E0E0 !important;
-        border-radius: 12px !important;
-        height: 55px !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
-        font-size: 16px !important;
+        height: 40px !important; /* Más bajo para ahorrar espacio */
+        border-radius: 8px !important;
+        border: 1px solid #DDD !important;
     }
     
-    /* 7. BOTÓN INICIAR SESIÓN (Naranja con letras BLANCAS - Idéntico imagen) */
-    div.stButton > button:first-child {
-        background-color: #FF6B00 !important;
-        color: #FFFFFF !important; /* Texto BLANCO como en la foto */
-        border: none !important;
-        border-radius: 15px !important;
-        height: 3.8em !important;
-        width: 100% !important;
-        font-weight: 700 !important;
-        font-size: 1.3rem !important;
-        text-transform: uppercase;
-        box-shadow: 0 6px 12px rgba(255, 107, 0, 0.2) !important;
-        margin-top: 10px;
+    /* Reducir espacio entre los widgets */
+    [data-testid="stVerticalBlock"] > div {
+        margin-top: -10px !important;
     }
 
-    /* 8. Links Inferiores (¿Olvidaste...? / Registro) */
-    .link-footer {
+    /* 5. BOTÓN INICIAR SESIÓN (Naranja con letras BLANCAS) */
+    div.stButton > button:first-child {
+        background-color: #FF6B00 !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 10px !important;
+        height: 3em !important;
+        width: 100% !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+        margin-top: 10px !important;
+    }
+
+    /* 6. Link Footer muy pequeño */
+    .link-mini {
         text-align: center;
-        margin-top: 20px;
+        margin-top: 5px;
         color: #666666 !important;
-        font-size: 0.9rem;
+        font-size: 0.7rem;
         font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
     }
     
-    /* Estilo para el botón de registro al final de la página */
-    .btn-registro-final {
-        margin-top: 40px;
-        text-align: center;
-    }
-    .btn-registro-final button {
+    /* Botón registro al final */
+    .btn-reg-mini button {
         background-color: transparent !important;
-        color: #888888 !important;
+        color: #FF6B00 !important;
         border: none !important;
         font-weight: bold !important;
-        text-decoration: none !important;
-        font-size: 0.9rem !important;
+        font-size: 0.8rem !important;
+        text-decoration: underline !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- LÓGICA DE LOGIN ---
+# --- LÓGICA DE ESTADO ---
 if 'logueado' not in st.session_state:
     st.session_state.logueado = False
 
-# --- PANTALLA DE ACCESO (EL CLON) ---
+# --- PANTALLA DE ACCESO COMPACTA ---
 if not st.session_state.logueado:
     
-    # Cabecera con Logo FOX
-    st.markdown('<div class="header-fox-premium">', unsafe_allow_html=True)
-    # Solo usamos el logo de letras FOX como en la imagen
-    st.image("fox-letras-naranja.PNG", width=320)
+    # 1. Cabecera con logo reducido para que no empuje todo hacia abajo
+    st.markdown('<div class="header-compact">', unsafe_allow_html=True)
+    st.image("fox-letras-naranja.PNG", width=220) # Reducido de 320 a 220
     st.markdown('</div>', unsafe_allow_html=True)
     
-    st.markdown("<div class='titulo-negro'>Acceso Interclub</div>", unsafe_allow_html=True)
+    st.markdown("<div class='titulo-mini'>Acceso Interclub</div>", unsafe_allow_html=True)
     
-    # Contenedor central
-    col1, col_centro, col2 = st.columns([0.05, 0.9, 0.05])
+    # 2. Formulario en columna central compacta
+    _, col_centro, _ = st.columns([0.05, 0.9, 0.05])
     
     with col_centro:
         u = st.text_input("Usuario o Email")
         p = st.text_input("Contraseña", type="password")
-        
-        st.write("") # Espacio
         
         if st.button("INICIAR SESIÓN"):
             if u == "Fox-Interclub" and p == "Interclub-Fox-2026":
                 st.session_state.logueado = True
                 st.rerun()
             else:
-                st.error("Credenciales incorrectas")
+                st.error("Error")
         
-        st.markdown("<div class='link-footer'>¿OLVIDASTE TU CONTRASEÑA?</div>", unsafe_allow_html=True)
+        st.markdown("<div class='link-mini'>¿OLVIDASTE TU CONTRASEÑA?</div>", unsafe_allow_html=True)
 
-    # Botón inferior de registro
-    st.markdown("<div style='margin-top: 50px;'></div>", unsafe_allow_html=True)
+    # 3. Registro al final (Pegado abajo)
+    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     if st.button("¿AÚN NO ESTÁS INSCRITO? REGÍSTRATE AQUÍ"):
-        st.info("Formulario de registro en proceso.")
+        st.info("Registro disponible pronto")
 
-# --- PANTALLA INTERIOR ---
+# --- PANEL INTERIOR ---
 else:
-    with st.sidebar:
-        if st.button("Cerrar Sesión"):
-            st.session_state.logueado = False
-            st.rerun()
-    st.title("Bienvenido al Panel de Control")
-    st.write("Has accedido correctamente con el nuevo diseño.")
+    st.success("Logueado")
+    if st.button("Cerrar Sesión"):
+        st.session_state.logueado = False
+        st.rerun()
