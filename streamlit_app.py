@@ -5,86 +5,81 @@ import pandas as pd
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="FOX INTERCLUB", page_icon="🦊", layout="centered")
 
-# --- DISEÑO ULTRA-COMPACTO (ANTI-SCROLL) ---
+# --- DISEÑO ULTRA-COMPACTO Y CENTRADO FORZADO ---
 st.markdown("""
     <style>
     /* 1. Fondo y Base */
     .stApp { 
         background-color: #F2F2F2; 
         color: #333333; 
-        overflow: hidden; /* Evita el scroll global si es posible */
     }
     
-    /* Ocultar elementos innecesarios para ganar espacio */
+    /* Ocultar elementos innecesarios */
     header, footer, #MainMenu {visibility: hidden;}
     .stDeployButton {display:none;}
     
-    /* Reducir el padding superior de la app */
+    /* Reducir el padding superior para ganar espacio */
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 2rem !important;
         padding-bottom: 0rem !important;
     }
 
-    /* 2. Contenedor de Logos Compacto */
-    .header-compact {
+    /* 2. CENTRADO TOTAL DE LOGO (CSS DIRECTO) */
+    .logo-container {
         display: flex;
-        flex-direction: column;
-        align-items: center;
         justify-content: center;
-        margin-bottom: 5px;
-    }
-
-    /* 3. Título pequeño */
-    .titulo-mini {
-        text-align: center;
-        color: #1A1A1A !important;
-        font-size: 22px;
-        font-weight: 800;
+        align-items: center;
+        width: 100%;
         margin-bottom: 10px;
     }
 
-    /* 4. Inputs más bajos (Compactos) */
+    /* 3. Título Centrado */
+    .titulo-mini {
+        text-align: center;
+        color: #1A1A1A !important;
+        font-size: 24px;
+        font-weight: 800;
+        margin-top: 5px;
+        margin-bottom: 15px;
+    }
+
+    /* 4. Inputs Compactos */
     .stTextInput input, .stPasswordInput input {
         background-color: #FFFFFF !important;
-        height: 40px !important; /* Más bajo para ahorrar espacio */
-        border-radius: 8px !important;
+        height: 45px !important;
+        border-radius: 10px !important;
         border: 1px solid #DDD !important;
     }
     
-    /* Reducir espacio entre los widgets */
+    /* Reducir espacio entre los widgets de entrada */
     [data-testid="stVerticalBlock"] > div {
-        margin-top: -10px !important;
+        margin-top: -8px !important;
     }
 
-    /* 5. BOTÓN INICIAR SESIÓN (Naranja con letras BLANCAS) */
+    /* 5. BOTÓN INICIAR SESIÓN (Naranja Premium) */
     div.stButton > button:first-child {
         background-color: #FF6B00 !important;
         color: #FFFFFF !important;
         border: none !important;
-        border-radius: 10px !important;
-        height: 3em !important;
+        border-radius: 12px !important;
+        height: 3.5em !important;
         width: 100% !important;
         font-weight: 700 !important;
-        font-size: 1rem !important;
-        margin-top: 10px !important;
+        font-size: 1.1rem !important;
+        margin-top: 15px !important;
+        box-shadow: 0 4px 10px rgba(255, 107, 0, 0.2) !important;
     }
 
-    /* 6. Link Footer muy pequeño */
-    .link-mini {
+    /* 6. Footer de Registro */
+    .btn-reg-link {
         text-align: center;
-        margin-top: 5px;
-        color: #666666 !important;
-        font-size: 0.7rem;
-        font-weight: bold;
+        margin-top: 20px;
     }
-    
-    /* Botón registro al final */
-    .btn-reg-mini button {
+    .btn-reg-link button {
         background-color: transparent !important;
         color: #FF6B00 !important;
         border: none !important;
         font-weight: bold !important;
-        font-size: 0.8rem !important;
         text-decoration: underline !important;
     }
     </style>
@@ -94,17 +89,20 @@ st.markdown("""
 if 'logueado' not in st.session_state:
     st.session_state.logueado = False
 
-# --- PANTALLA DE ACCESO COMPACTA ---
+# --- PANTALLA DE ACCESO ---
 if not st.session_state.logueado:
     
-    # 1. Cabecera con logo reducido para que no empuje todo hacia abajo
-    st.markdown('<div class="header-compact">', unsafe_allow_html=True)
-    st.image("fox-letras-naranja.PNG", width=220) # Reducido de 320 a 220
-    st.markdown('</div>', unsafe_allow_html=True)
+    # 1. LOGO CENTRADO CON HTML (Soluciona el problema del lateral izquierdo)
+    # He subido el tamaño a 280 para que se vea mejor
+    st.markdown("""
+        <div class="logo-container">
+            <img src="https://raw.githubusercontent.com/Foxjiujitsu/app-interclub-fox/main/fox-letras-naranja.PNG" width="280">
+        </div>
+    """, unsafe_allow_html=True)
     
     st.markdown("<div class='titulo-mini'>Acceso Interclub</div>", unsafe_allow_html=True)
     
-    # 2. Formulario en columna central compacta
+    # 2. Formulario centrado
     _, col_centro, _ = st.columns([0.05, 0.9, 0.05])
     
     with col_centro:
@@ -116,18 +114,17 @@ if not st.session_state.logueado:
                 st.session_state.logueado = True
                 st.rerun()
             else:
-                st.error("Error")
+                st.error("Credenciales incorrectas")
         
-        st.markdown("<div class='link-mini'>¿OLVIDASTE TU CONTRASEÑA?</div>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; font-size:0.8rem; color:#666; margin-top:10px;'>¿OLVIDASTE TU CONTRASEÑA?</p>", unsafe_allow_html=True)
 
-    # 3. Registro al final (Pegado abajo)
-    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+    # 3. Registro al final
     if st.button("¿AÚN NO ESTÁS INSCRITO? REGÍSTRATE AQUÍ"):
-        st.info("Registro disponible pronto")
+        st.info("Registro en proceso")
 
 # --- PANEL INTERIOR ---
 else:
-    st.success("Logueado")
+    st.success("Sesión Iniciada")
     if st.button("Cerrar Sesión"):
         st.session_state.logueado = False
         st.rerun()
