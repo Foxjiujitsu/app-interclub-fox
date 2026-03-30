@@ -70,65 +70,68 @@ else:
             st.session_state.luchas = st.session_state.luchas[st.session_state.luchas['Categoría'] != cat_label]
             st.rerun()
 
-        # Preparar datos de luchas actuales
-        luchas_cat = st.session_state.luchas[st.session_state.luchas['Categoría'] == cat_label].copy()
+        # Cargamos las luchas guardadas
+        luchas_guardadas = st.session_state.luchas[st.session_state.luchas['Categoría'] == cat_label].copy()
         
-        # Si está vacía, cargar a todos los competidores disponibles como "Luchador 1"
-        if luchas_cat.empty and not df_f.empty:
-            nuevas = []
-            for _, r in df_f.iterrows():
-                nuevas.append({
-                    "Luchador_1": r['Nombre'],
-                    "Ficha_1": f"{r['Cinturón']} | {r['Estilo']} | {r['Peso']}kg | {r['Club']}",
-                    "VS": "VS", 
-                    "Luchador_2": "---", 
-                    "Ficha_2": "---",
-                    "Categoría": cat_label, 
-                    "Resultado_Final": "Pendiente"
-                })
-            luchas_cat = pd.DataFrame(nuevas)
+        # Identificamos quiénes YA son pareja (Luchador 2) para no mostrarlos como Luchador 1
+        nombres_ya_emparejados = set(luchas_guardadas[luchas_guardadas['Luchador_2'] != "---"]['Luchador_2'].tolist())
 
-        # Crear diccionario de fichas para búsqueda rápida
+        # Preparamos la tabla: Todos los de la categoría menos los que ya son Luchador 2 de alguien
+        data_para_tabla = []
+        for _, r in df_f.iterrows():
+            if r['Nombre'] not in nombres_ya_emparejados:
+                # Si ya existe un cruce guardado para este Luchador 1, lo recuperamos
+                existente = luchas_guardadas[luchas_guardadas['Luchador_1'] == r['Nombre']]
+                if not existente.empty:
+                    data_para_tabla.append(existente.iloc[0].to_dict())
+                else:
+                    data_para_tabla.append({
+                        "Luchador_1": r['Nombre'],
+                        "Ficha_1": f"{r['Cinturón']} | {r['Estilo']} | {r['Peso']}kg | {r['Club']}",
+                        "VS": "VS", 
+                        "Luchador_2": "---", 
+                        "Ficha_2": "---",
+                        "Categoría": cat_label, 
+                        "Resultado_Final": "Pendiente"
+                    })
+        
+        df_edit = pd.DataFrame(data_para_tabla)
+
+        # Diccionario de fichas para el autocompletado instantáneo
         fichas_dict = {r['Nombre']: f"{r['Cinturón']} | {r['Estilo']} | {r['Peso']}kg | {r['Club']}" for _, r in df_f.iterrows()}
         fichas_dict["---"] = "---"
 
-        # Identificar quiénes ya están asignados como Contrincantes (Luchador 2)
-        l2_asignados = set(luchas_cat[luchas_cat['Luchador_2'] != "---"]['Luchador_2'].tolist())
-        
-        # Filtrar la tabla para no mostrar como "Luchador 1" a los que ya son pareja de alguien
-        luchas_visibles = luchas_cat[~luchas_cat['Luchador_1'].isin(l2_asignados)].copy()
-
-        # Opciones para el desplegable (Solo gente que no es ni L1 ni L2 en la tabla actual)
-        l1_actuales = set(luchas_visibles['Luchador_1'].tolist())
-        opciones_l2 = ["---"] + [n for n in df_f['Nombre'].tolist() if n not in l1_actuales and n not in l2_asignados]
+        # Opciones para el desplegable (Todos los nombres de la categoría)
+        opciones_nombres = ["---"] + sorted(df_f['Nombre'].tolist())
 
         # EDITOR DE TABLA
-        edit_l = st.data_editor(
-            luchas_visibles,
+        edited_df = st.data_editor(
+            df_edit,
             column_config={
                 "Luchador_1": st.column_config.TextColumn("Luchador 1", disabled=True),
                 "Ficha_1": st.column_config.TextColumn("Ficha 1", disabled=True),
-                "Luchador_2": st.column_config.SelectboxColumn("Contrincante", options=opciones_l2),
+                "Luchador_2": st.column_config.SelectboxColumn("Contrincante", options=opciones_nombres),
                 "Ficha_2": st.column_config.TextColumn("Ficha 2", disabled=True),
+                "VS": st.column_config.TextColumn("VS", disabled=True),
+                "Categoría": None, "Resultado_Final": None, "ID": None # Ocultamos columnas internas
             },
             use_container_width=True, hide_index=True
         )
 
-        # ACTUALIZAR FICHAS 2 AUTOMÁTICAMENTE EN PANTALLA
-        for i, row in edit_l.iterrows():
-            nombre_l2 = row['Luchador_2']
-            edit_l.at[i, 'Ficha_2'] = fichas_dict.get(nombre_l2, "---")
+        # Aplicar Ficha 2 automáticamente al seleccionar nombre
+        for i, row in edited_df.iterrows():
+            nombre_sel = row['Luchador_2']
+            edited_df.at[i, 'Ficha_2'] = fichas_dict.get(nombre_sel, "---")
 
         if st.button("💾 GUARDAR COMBATES"):
-            # Combinar con las luchas de las otras categorías y actualizar el archivo
-            otras = st.session_state.luchas[st.session_state.luchas['Categoría'] != cat_label]
-            # Combinamos las editadas con las que quizás no eran visibles (si hubiera)
-            st.session_state.luchas = pd.concat([otras, edit_l], ignore_index=True)
+            otras_cats = st.session_state.luchas[st.session_state.luchas['Categoría'] != cat_label]
+            # Solo guardamos las filas que tienen un contrincante asignado o que son base
+            st.session_state.luchas = pd.concat([otras_cats, edited_df], ignore_index=True)
             guardar_datos(st.session_state.luchas, LUC_FILE)
-            st.success("Combates guardados. La lista se ha actualizado.")
+            st.success("¡Guardado! Los luchadores asignados desaparecerán de la lista de pendientes.")
             st.rerun()
 
-    # --- RESTO DE SECCIONES ---
+    # --- RESTO DE SECCIONES (Siguen igual) ---
     elif "REGISTRO" in st.session_state.active_tab:
         with st.form("reg"):
             n = st.text_input("Nombre"); c = st.selectbox("Cinto", ["Blanco", "Gris", "Amarillo", "Naranja", "Verde", "Azul", "Morado", "Marrón", "Negro"])
@@ -149,4 +152,4 @@ else:
                  otras = st.session_state.luchas[~( (st.session_state.luchas['Categoría'] == cat) & (st.session_state.luchas['Luchador_2'] != "---") )]
                  l_res["Resultado_Final"] = res_edit["Resultado_Final"].values
                  st.session_state.luchas = pd.concat([otras, l_res], ignore_index=True)
-                 guardar_datos(st.session_state.luchas, LUC_FILE); st.success("Resultados actualizados")
+                 guardar_datos(st.session_state.luchas, LUC_FILE); st.success("Actualizado")
