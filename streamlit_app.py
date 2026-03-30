@@ -29,7 +29,7 @@ if 'active_tab' not in st.session_state:
 st.markdown("""
     <style>
     .stApp { background-color: #FFFFFF; color: #333333; }
-    .main .block-container { max-width: 1000px; margin: 0 auto; padding-top: 10px !important; }
+    .main .block-container { max-width: 1100px; margin: 0 auto; padding-top: 10px !important; }
     .logo-container { text-align: center; margin-bottom: 10px; width: 100%; }
     div.stButton > button {
         background-color: #ffffff !important; color: #333333 !important;
@@ -66,58 +66,66 @@ else:
         
         df_f = st.session_state.df[st.session_state.df['Edad'] <= 12] if es_inf else st.session_state.df[st.session_state.df['Edad'] > 12]
         
-        # Botón de emergencia para resetear
         if st.button("⚠️ REINICIAR TODA LA TABLA"):
             st.session_state.luchas = st.session_state.luchas[st.session_state.luchas['Categoría'] != cat_label]
             st.rerun()
 
-        # Obtener luchas de esta categoría
+        # Preparar datos de luchas actuales
         luchas_cat = st.session_state.luchas[st.session_state.luchas['Categoría'] == cat_label].copy()
         
-        # Si no hay nada, cargar a todos como Luchador 1
+        # Si está vacía, cargar a todos los competidores disponibles como "Luchador 1"
         if luchas_cat.empty and not df_f.empty:
             nuevas = []
             for _, r in df_f.iterrows():
                 nuevas.append({
-                    "ID": r['Número'], "Luchador_1": r['Nombre'],
+                    "Luchador_1": r['Nombre'],
                     "Ficha_1": f"{r['Cinturón']} | {r['Estilo']} | {r['Peso']}kg | {r['Club']}",
-                    "VS": "VS", "Luchador_2": "---", "Ficha_2": "---",
-                    "Categoría": cat_label, "Resultado_Final": "Pendiente"
+                    "VS": "VS", 
+                    "Luchador_2": "---", 
+                    "Ficha_2": "---",
+                    "Categoría": cat_label, 
+                    "Resultado_Final": "Pendiente"
                 })
             luchas_cat = pd.DataFrame(nuevas)
 
-        # LISTA DE DISPONIBLES (Gente que NO es Luchador 2 en ninguna fila Y que NO es el mismo Luchador 1 de esa fila)
-        asignados_l2 = set(luchas_cat[luchas_cat['Luchador_2'] != "---"]['Luchador_2'].tolist())
-        asignados_l1 = set(luchas_cat[luchas_cat['Luchador_2'] != "---"]['Luchador_1'].tolist())
-        
-        # El desplegable mostrará a todos los de la categoría que no estén peleando ya como secundarios
-        opciones_l2 = ["---"] + [n for n in df_f['Nombre'].tolist() if n not in asignados_l2 and n not in asignados_l1]
+        # Crear diccionario de fichas para búsqueda rápida
+        fichas_dict = {r['Nombre']: f"{r['Cinturón']} | {r['Estilo']} | {r['Peso']}kg | {r['Club']}" for _, r in df_f.iterrows()}
+        fichas_dict["---"] = "---"
 
-        # EDITOR
+        # Identificar quiénes ya están asignados como Contrincantes (Luchador 2)
+        l2_asignados = set(luchas_cat[luchas_cat['Luchador_2'] != "---"]['Luchador_2'].tolist())
+        
+        # Filtrar la tabla para no mostrar como "Luchador 1" a los que ya son pareja de alguien
+        luchas_visibles = luchas_cat[~luchas_cat['Luchador_1'].isin(l2_asignados)].copy()
+
+        # Opciones para el desplegable (Solo gente que no es ni L1 ni L2 en la tabla actual)
+        l1_actuales = set(luchas_visibles['Luchador_1'].tolist())
+        opciones_l2 = ["---"] + [n for n in df_f['Nombre'].tolist() if n not in l1_actuales and n not in l2_asignados]
+
+        # EDITOR DE TABLA
         edit_l = st.data_editor(
-            luchas_cat[~luchas_cat['Luchador_1'].isin(asignados_l2)], # Ocultamos al que ya pusimos de pareja
+            luchas_visibles,
             column_config={
-                "Luchador_2": st.column_config.SelectboxColumn("Contrincante", options=opciones_l2),
+                "Luchador_1": st.column_config.TextColumn("Luchador 1", disabled=True),
                 "Ficha_1": st.column_config.TextColumn("Ficha 1", disabled=True),
+                "Luchador_2": st.column_config.SelectboxColumn("Contrincante", options=opciones_l2),
                 "Ficha_2": st.column_config.TextColumn("Ficha 2", disabled=True),
-                "VS": st.column_config.TextColumn("VS", disabled=True)
             },
-            use_container_width=True, hide_index=True, num_rows="dynamic"
+            use_container_width=True, hide_index=True
         )
 
+        # ACTUALIZAR FICHAS 2 AUTOMÁTICAMENTE EN PANTALLA
+        for i, row in edit_l.iterrows():
+            nombre_l2 = row['Luchador_2']
+            edit_l.at[i, 'Ficha_2'] = fichas_dict.get(nombre_l2, "---")
+
         if st.button("💾 GUARDAR COMBATES"):
-            for i, row in edit_l.iterrows():
-                if row['Luchador_2'] != "---":
-                    m = st.session_state.df[st.session_state.df['Nombre'] == row['Luchador_2']]
-                    if not m.empty:
-                        r2 = m.iloc[0]
-                        edit_l.at[i, 'Ficha_2'] = f"{r2['Cinturón']} | {r2['Estilo']} | {r2['Peso']}kg | {r2['Club']}"
-            
-            # Guardar mezcla
+            # Combinar con las luchas de las otras categorías y actualizar el archivo
             otras = st.session_state.luchas[st.session_state.luchas['Categoría'] != cat_label]
+            # Combinamos las editadas con las que quizás no eran visibles (si hubiera)
             st.session_state.luchas = pd.concat([otras, edit_l], ignore_index=True)
             guardar_datos(st.session_state.luchas, LUC_FILE)
-            st.success("Guardado con éxito. Refrescando...")
+            st.success("Combates guardados. La lista se ha actualizado.")
             st.rerun()
 
     # --- RESTO DE SECCIONES ---
@@ -141,4 +149,4 @@ else:
                  otras = st.session_state.luchas[~( (st.session_state.luchas['Categoría'] == cat) & (st.session_state.luchas['Luchador_2'] != "---") )]
                  l_res["Resultado_Final"] = res_edit["Resultado_Final"].values
                  st.session_state.luchas = pd.concat([otras, l_res], ignore_index=True)
-                 guardar_datos(st.session_state.luchas, LUC_FILE); st.success("Actualizado")
+                 guardar_datos(st.session_state.luchas, LUC_FILE); st.success("Resultados actualizados")
