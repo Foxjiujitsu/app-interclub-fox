@@ -5,26 +5,26 @@ import pandas as pd
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="INTERCLUB FOX", page_icon="🦊", layout="centered")
 
-# --- DISEÑO CORPORATIVO CORREGIDO ---
+# --- DISEÑO CORPORATIVO REFINADO ---
 st.markdown("""
     <style>
-    .stApp { background-color: #000000; color: #FFFFFF; font-family: 'Arial', sans-serif; }
-    h1, h2, h3, p, span, label { color: #FFFFFF !important; }
+    /* 1. Fondo y Textos */
+    .stApp { background-color: #000000; color: #FFFFFF; }
+    h1, h2, h3, p, span, label { color: #FFFFFF !important; font-weight: bold !important; }
 
-    /* Cabecera Centrada */
-    [data-testid="stVerticalBlock"] > div:has(img) {
-        display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-    }
+    /* 2. Centrado de Imágenes */
     .stImage > img { display: block; margin-left: auto; margin-right: auto; }
-    .acceso-interclub-titulo { text-align: center; color: #FFFFFF; font-size: 26px; font-weight: bold; margin-top: -10px; margin-bottom: 20px; }
 
-    /* Inputs */
+    /* 3. Título de Cabecera */
+    .acceso-titulo { text-align: center; color: #FFFFFF; font-size: 28px; font-weight: bold; margin-top: 10px; margin-bottom: 20px; }
+
+    /* 4. Inputs (Bordes Naranjas) */
     .stTextInput>div>div>input, .stPasswordInput>div>div>input {
         background-color: #1A1A1A !important; color: #FFFFFF !important;
         border: 2px solid #FF6B00 !important; border-radius: 10px !important;
     }
 
-    /* Botón INICIAR SESIÓN (Naranja con letras negras) */
+    /* 5. BOTÓN INICIAR SESIÓN (Fijo: Naranja con letras negras) */
     .stButton>button {
         background-color: #FF6B00 !important;
         color: #000000 !important;
@@ -32,50 +32,47 @@ st.markdown("""
         border: 2px solid #FF6B00 !important;
         height: 3.5em !important;
         width: 100% !important;
-        font-weight: bold !important;
+        font-weight: 900 !important;
         font-size: 18px !important;
+        text-transform: uppercase;
     }
     .stButton>button:hover {
         background-color: #000000 !important;
         color: #FF6B00 !important;
     }
 
-    /* Botón de Registro (Borde naranja, fondo negro) */
-    div[data-testid="stVerticalBlock"] > div:last-child .stButton>button {
-        background-color: #000000 !important;
-        color: #FF6B00 !important;
-        border: 2px solid #FF6B00 !important;
-        margin-top: 20px;
-    }
-
-    /* Radio Button Naranja */
+    /* 6. Radio Button (Selección naranja, no roja) */
     label[data-baseweb="radio"] > div:first-child { border-color: #FF6B00 !important; }
     label[data-baseweb="radio"][aria-checked="true"] > div:first-child { background-color: #FF6B00 !important; }
     label[data-baseweb="radio"][aria-checked="true"] > div:first-child > div { background-color: #000000 !important; }
+
+    /* 7. Contenedor de Formulario */
+    [data-testid="stForm"] { border: 2px solid #FF6B00; border-radius: 15px; background-color: #0A0A0A; padding: 25px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- CREDENCIALES ---
-ADMIN_USER = "Fox-Interclub"
-ADMIN_PASS = "Interclub-Fox-2026"
-
+# --- LÓGICA DE NAVEGACIÓN ---
 if 'autenticado' not in st.session_state:
     st.session_state.update({'autenticado': False, 'perfil': None, 'modo_registro': False, 'user': None})
 
-# --- 1. PANTALLA DE ACCESO ---
+# --- PANTALLA DE ACCESO ---
 if not st.session_state['autenticado'] and not st.session_state['modo_registro']:
-    st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=140)
-    st.image("fox-letras-naranja.PNG", width=320)
-    st.markdown("<div class='acceso-interclub-titulo'>Acceso Interclub</div>", unsafe_allow_html=True)
+    # Centrado de Logos usando columnas
+    col_izq, col_logo, col_der = st.columns([1, 2, 1])
+    with col_logo:
+        st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=150)
+        st.image("fox-letras-naranja.PNG", use_column_width=True)
+    
+    st.markdown("<div class='acceso-titulo'>Acceso Interclub</div>", unsafe_allow_html=True)
     
     with st.form("login_fox"):
         u = st.text_input("Usuario o Email")
         p = st.text_input("Contraseña", type="password")
         if st.form_submit_button("INICIAR SESIÓN"):
-            if u == ADMIN_USER and p == ADMIN_PASS:
+            if u == "Fox-Interclub" and p == "Interclub-Fox-2026":
                 st.session_state.update({'autenticado': True, 'perfil': 'Organizador', 'user': u})
                 st.rerun()
-            elif p == "fox2026":
+            elif p == "fox2026": # Clave genérica temporal para competidores
                 st.session_state.update({'autenticado': True, 'perfil': 'Competidor', 'user': u})
                 st.rerun()
             else:
@@ -85,21 +82,27 @@ if not st.session_state['autenticado'] and not st.session_state['modo_registro']
         st.session_state['modo_registro'] = True
         st.rerun()
 
-# --- 2. PANTALLA DE REGISTRO (SOLO COMPETIDOR) ---
+# --- PANTALLA DE REGISTRO ---
 elif st.session_state['modo_registro']:
-    st.image("fox-letras-naranja.PNG", width=250)
+    col_izq, col_logo, col_der = st.columns([1, 2, 1])
+    with col_logo:
+        st.image("fox-letras-naranja.PNG", use_column_width=True)
+    
     st.markdown("<h2 style='text-align:center; color:#FF6B00;'>NUEVA INSCRIPCIÓN</h2>", unsafe_allow_html=True)
     
-    with st.form("registro_competidor"):
-        st.write("Crea tu cuenta de Competidor:")
+    tipo = st.radio("¿Qué deseas registrar?", ["Soy un Competidor", "Soy un Club"])
+    
+    with st.form("registro_unico"):
+        st.write(f"Crea tu cuenta como {tipo}:")
         reg_user = st.text_input("Nombre de Usuario")
-        reg_email = st.text_input("Email")
+        reg_email = st.text_input("Correo Electrónico")
         reg_pass = st.text_input("Contraseña", type="password")
         
         if st.form_submit_button("FINALIZAR REGISTRO"):
             if reg_user and reg_email and reg_pass:
-                st.success("¡Registro completado! Ya puedes iniciar sesión con tu usuario.")
+                st.success("¡Registro enviado! Ahora puedes iniciar sesión.")
                 st.session_state['modo_registro'] = False
+                st.rerun()
             else:
                 st.error("Rellena todos los campos.")
 
@@ -107,18 +110,19 @@ elif st.session_state['modo_registro']:
         st.session_state['modo_registro'] = False
         st.rerun()
 
-# --- 3. PANELES DE USUARIO ---
+# --- PANELES TRAS LOGIN ---
 else:
     with st.sidebar:
         st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=80)
-        st.write(f"Usuario: {st.session_state['user']}")
+        st.write(f"OSS! **{st.session_state['user']}**")
         if st.button("Cerrar Sesión"):
             st.session_state.update({'autenticado': False, 'perfil': None})
             st.rerun()
 
     if st.session_state['perfil'] == "Organizador":
-        st.title("PANEL ORGANIZADOR")
-        # Aquí iría tu tabla de Google Sheets para gestionarlo todo
+        st.title("🛡️ PANEL ORGANIZADOR")
+        st.write("Bienvenido, Roberto. Aquí gestionarás el evento.")
+        # Aquí cargaríamos la tabla de GSheets
     else:
-        st.title("MI FICHA DE COMPETIDOR")
-        st.write("Aquí podrás rellenar tu peso, cinturón y academia.")
+        st.title("🥋 MI FICHA DE COMPETIDOR")
+        st.write("Completa tu perfil para los cruces.")
