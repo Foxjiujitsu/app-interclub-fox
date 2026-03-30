@@ -6,7 +6,6 @@ st.set_page_config(page_title="FOX JIU-JITSU ADMIN", layout="wide")
 
 if 'page' not in st.session_state: st.session_state.page = 'login'
 
-# --- LOGIN ---
 if st.session_state.page == 'login':
     _, col, _ = st.columns([1,2,1])
     with col:
@@ -18,52 +17,48 @@ if st.session_state.page == 'login':
                 st.session_state.page = 'panel'
                 st.rerun()
 
-# --- PANEL DE GESTIÓN ---
 elif st.session_state.page == 'panel':
     st.title("🦊 PANEL DE GESTIÓN")
     
+    # CONEXIÓN DIRECTA POR URL (Más estable)
+    url = "https://docs.google.com/spreadsheets/d/11K7imjP8a96LUiJRe4m7sxUOSH1DSNUBglPDK0Olxao/edit#gid=0"
     conn = st.connection("gsheets", type=GSheetsConnection)
     
-    # Lectura de datos
     try:
-        df = conn.read(ttl=0)
+        df = conn.read(spreadsheet=url, ttl=0)
     except:
         df = pd.DataFrame(columns=["Nombre", "Cinturón", "Peso", "Edad", "BJJ / NO-GI", "Club"])
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["👥 Inscritos", "➕ Registro Manual", "⚔️ Cruces", "🏆 Resultados", "📸 Fotos"])
+    tab1, tab2 = st.tabs(["👥 Inscritos", "➕ Registro Manual"])
 
     with tab1:
         st.subheader("Lista de Competidores")
         if not df.empty:
-            # Editor simplificado
-            edited = st.data_editor(df, num_rows="dynamic", use_container_width=True)
-            if st.button("💾 GUARDAR CAMBIOS"):
-                conn.update(data=edited)
-                st.success("¡Base de datos actualizada!")
+            st.dataframe(df, use_container_width=True)
+            if st.button("🗑️ Borrar todo"):
+                conn.update(spreadsheet=url, data=pd.DataFrame(columns=df.columns))
                 st.rerun()
         else:
-            st.info("No hay inscritos. Registra a alguien en la siguiente pestaña.")
+            st.info("No hay inscritos todavía.")
 
     with tab2:
-        st.subheader("Registro Manual")
-        with st.form("reg_manual", clear_on_submit=True):
+        st.subheader("Nuevo Registro")
+        with st.form("registro"):
             n = st.text_input("Nombre")
             c = st.selectbox("Cinturón", ["Blanco", "Azul", "Morado", "Marrón", "Negro"])
-            pe = st.number_input("Peso (kg)", 10, 150, 70)
-            ed = st.number_input("Edad", 4, 80, 25)
-            est = st.selectbox("Estilo", ["BJJ (GI)", "NO-GI"])
+            p = st.number_input("Peso (kg)", 10, 150, 70)
+            e = st.number_input("Edad", 4, 80, 25)
+            s = st.selectbox("Estilo", ["BJJ (GI)", "NO-GI"])
             cl = st.text_input("Club")
             
-            if st.form_submit_button("AÑADIR LUCHADOR"):
+            if st.form_submit_button("GUARDAR LUCHADOR"):
                 if n and cl:
-                    nueva_fila = pd.DataFrame([{"Nombre":n,"Cinturón":c,"Peso":pe,"Edad":ed,"BJJ / NO-GI":est,"Club":cl}])
-                    # Si df está vacío, usamos solo la nueva fila
-                    df_final = pd.concat([df, nueva_fila], ignore_index=True) if not df.empty else nueva_fila
-                    conn.update(data=df_final)
-                    st.success(f"✅ {n} guardado.")
+                    nueva_fila = pd.DataFrame([{"Nombre":n,"Cinturón":c,"Peso":p,"Edad":e,"BJJ / NO-GI":s,"Club":cl}])
+                    df_final = pd.concat([df, nueva_fila], ignore_index=True)
+                    # Forzamos la actualización usando la URL exacta
+                    conn.update(spreadsheet=url, data=df_final)
+                    st.success("✅ ¡Guardado con éxito!")
                     st.rerun()
-                else:
-                    st.error("Rellena Nombre y Club")
 
     if st.sidebar.button("Cerrar Sesión"):
         st.session_state.page = 'login'
