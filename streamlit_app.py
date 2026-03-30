@@ -5,42 +5,49 @@ import pandas as pd
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="INTERCLUB FOX", page_icon="🦊", layout="centered")
 
-# --- DISEÑO CORPORATIVO (ESTILO FORZADO) ---
+# --- DISEÑO CORPORATIVO (ESTILO FORZADO AL MÁXIMO) ---
 st.markdown("""
     <style>
-    /* Fondo y Textos Base */
+    /* 1. Fondo y Textos Base */
     .stApp { background-color: #000000; color: #FFFFFF; }
     h1, h2, h3, p, span, label { color: #FFFFFF !important; font-weight: bold !important; }
 
-    /* CENTRADO DE LOGOS */
-    .stImage { display: flex !important; justify-content: center !important; }
-    
-    /* TÍTULO ACCESO */
+    /* 2. CENTRADO TOTAL DE LOGOS */
+    /* Forzamos que el contenedor de imágenes se alinee al centro */
+    div[data-testid="stVerticalBlock"] > div:has(img) {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .stImage > img {
+        display: block;
+        margin: 0 auto;
+    }
+
+    /* 3. TÍTULO ACCESO */
     .acceso-titulo { 
         text-align: center; color: #FFFFFF; font-size: 28px; 
         font-weight: bold; margin-bottom: 20px; width: 100%; display: block;
     }
 
-    /* BOTÓN INICIAR SESIÓN (DISEÑO BLINDADO) */
-    /* Atacamos el botón y cualquier texto/párrafo dentro de él */
+    /* 4. BOTÓN INICIAR SESIÓN (DISEÑO BLINDADO) */
+    /* Forzamos el fondo naranja al botón */
     div.stButton > button {
         background-color: #FF6B00 !important;
         border: 2px solid #FF6B00 !important;
         border-radius: 10px !important;
         height: 3.5em !important;
         width: 100% !important;
-        opacity: 1 !important;
-        transition: 0.3s !important;
     }
     
-    /* ESTO ES LO MÁS IMPORTANTE: Forzamos el texto NEGRO */
-    div.stButton > button div, 
-    div.stButton > button p, 
-    div.stButton > button span {
+    /* FORZAMOS EL TEXTO NEGRO (Atacamos el elemento interno de Streamlit) */
+    div.stButton > button p {
         color: #000000 !important;
         font-weight: 900 !important;
         font-size: 18px !important;
         text-transform: uppercase !important;
+        margin: 0 !important;
     }
 
     /* Hover: Fondo negro, texto naranja */
@@ -48,55 +55,53 @@ st.markdown("""
         background-color: #000000 !important;
         border: 2px solid #FF6B00 !important;
     }
-    div.stButton > button:hover p,
-    div.stButton > button:hover span,
-    div.stButton > button:hover div {
+    div.stButton > button:hover p {
         color: #FF6B00 !important;
     }
 
-    /* FORMULARIO */
+    /* 5. FORMULARIO Y INPUTS */
     [data-testid="stForm"] { border: 2px solid #FF6B00; border-radius: 15px; background-color: #0A0A0A; padding: 25px; }
+    .stTextInput input, .stPasswordInput input {
+        background-color: #1A1A1A !important; color: #FFFFFF !important;
+        border: 2px solid #FF6B00 !important; border-radius: 10px !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- NAVEGACIÓN ---
+# --- LÓGICA DE NAVEGACIÓN ---
 if 'autenticado' not in st.session_state:
     st.session_state.update({'autenticado': False, 'perfil': None, 'modo_registro': False, 'user': None})
 
 # --- PANTALLA DE ACCESO ---
 if not st.session_state['autenticado'] and not st.session_state['modo_registro']:
     
-    # Centrado manual con columnas
-    col_izq, col_centro, col_der = st.columns([1, 3, 1])
+    # Logos centrados (ahora con el CSS de arriba deberían estar perfectos)
+    st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=160)
+    st.image("fox-letras-naranja.PNG", width=350)
     
-    with col_centro:
-        st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=160)
-        st.image("fox-letras-naranja.PNG", use_container_width=True)
+    st.markdown("<div class='acceso-titulo'>Acceso Interclub</div>", unsafe_allow_html=True)
+    
+    with st.form("login_fox"):
+        u = st.text_input("Usuario o Email")
+        p = st.text_input("Contraseña", type="password")
         
-        st.markdown("<div class='acceso-titulo'>Acceso Interclub</div>", unsafe_allow_html=True)
-        
-        with st.form("login_fox"):
-            u = st.text_input("Usuario o Email")
-            p = st.text_input("Contraseña", type="password")
-            
-            if st.form_submit_button("INICIAR SESIÓN"):
-                if u == "Fox-Interclub" and p == "Interclub-Fox-2026":
-                    st.session_state.update({'autenticado': True, 'perfil': 'Organizador', 'user': u})
-                    st.rerun()
-                elif p == "fox2026":
-                    st.session_state.update({'autenticado': True, 'perfil': 'Competidor', 'user': u})
-                    st.rerun()
-                else:
-                    st.error("Credenciales incorrectas.")
+        # El botón de inicio
+        if st.form_submit_button("INICIAR SESIÓN"):
+            if u == "Fox-Interclub" and p == "Interclub-Fox-2026":
+                st.session_state.update({'autenticado': True, 'perfil': 'Organizador', 'user': u})
+                st.rerun()
+            elif p == "fox2026":
+                st.session_state.update({'autenticado': True, 'perfil': 'Competidor', 'user': u})
+                st.rerun()
+            else:
+                st.error("Credenciales incorrectas.")
 
     # Botón de Registro centrado
-    _, col_btn, _ = st.columns([0.5, 3, 0.5])
-    with col_btn:
-        if st.button("¿AÚN NO ESTÁS INSCRITO? REGÍSTRATE AQUÍ"):
-            st.session_state['modo_registro'] = True
-            st.rerun()
+    if st.button("¿AÚN NO ESTÁS INSCRITO? REGÍSTRATE AQUÍ"):
+        st.session_state['modo_registro'] = True
+        st.rerun()
 
-# --- EL RESTO DEL CÓDIGO (REGISTRO Y PANELES) SIGUE IGUAL ---
+# --- EL RESTO DEL CÓDIGO (REGISTRO Y PANELES) ---
 elif st.session_state['modo_registro']:
     st.image("fox-letras-naranja.PNG", width=250)
     st.markdown("<h2 style='text-align:center; color:#FF6B00;'>NUEVA INSCRIPCIÓN</h2>", unsafe_allow_html=True)
@@ -111,7 +116,7 @@ elif st.session_state['modo_registro']:
         
         if st.form_submit_button("FINALIZAR REGISTRO"):
             if reg_user and reg_email and reg_pass:
-                st.success("¡Registro enviado! Ya puedes iniciar sesión.")
+                st.success("¡Registro enviado! Ahora puedes iniciar sesión.")
                 st.session_state['modo_registro'] = False
                 st.rerun()
             else:
