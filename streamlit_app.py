@@ -6,7 +6,7 @@ import os
 st.set_page_config(page_title="FOX JIU-JITSU", layout="wide")
 
 DB_FILE = "competidores.csv"
-LUC_FILE = "luchas.csv" # Archivo para guardar los emparejamientos
+LUC_FILE = "luchas.csv"
 
 def cargar_datos(archivo, columnas):
     if os.path.exists(archivo):
@@ -17,9 +17,8 @@ def cargar_datos(archivo, columnas):
 def guardar_datos(df, archivo):
     df.to_csv(archivo, index=False)
 
-# Inicializar estados
 if 'df' not in st.session_state:
-    st.session_state.df = cargar_datos(DB_FILE, ["Número", "Nombre", "Cinturón", "Peso", "Edad", "Estilo", "Club"])
+    st.session_state.df = cargar_datos(DB_FILE, ["Número", "Nombre", "Cinturón", "Peso", "Edad", "Estilo", "Club", "Resultado"])
 if 'luchas' not in st.session_state:
     st.session_state.luchas = cargar_datos(LUC_FILE, ["ID_Lucha", "Competidor_1", "Info_1", "VS", "Competidor_2", "Info_2", "Categoría"])
 
@@ -46,11 +45,14 @@ st.markdown("""
 
 st.markdown(f"""<div class="logo-container"><img src="https://raw.githubusercontent.com/Foxjiujitsu/app-interclub-fox/main/fox-letras-naranja.PNG" width="200"><br><b>SISTEMA DE COMPETICIÓN</b></div>""", unsafe_allow_html=True)
 
-# --- LÓGICA DE EMPAREJAMIENTO AUTOMÁTICO ---
+# --- ALGORITMO DE EMPAREJAMIENTO ACTUALIZADO ---
 def generar_emparejamientos(df_filtrado, cat_nombre):
     luchas = []
     ya_emparejados = set()
     lista = df_filtrado.to_dict('records')
+    
+    # Definir margen de edad según categoría
+    margen_edad = 2 if cat_nombre == "Infantil" else 10
     
     for i, c1 in enumerate(lista):
         if c1['Nombre'] in ya_emparejados: continue
@@ -61,13 +63,14 @@ def generar_emparejamientos(df_filtrado, cat_nombre):
         for j, c2 in enumerate(lista):
             if i == j or c2['Nombre'] in ya_emparejados: continue
             
-            # REGLAS: Mismo Estilo, Mismo Cinturón, Diferente Club
-            if c1['Estilo'] == c2['Estilo'] and c1['Cinturón'] == c2['Cinturón'] and c1['Club'] != c2['Club']:
-                # Diferencia de edad max 2 años y peso
+            # REGLAS FIJAS: Mismo Estilo, Mismo Cinturón, DIFERENTE Club
+            if c1['Estilo'] == c2['Estilo'] and c1['Cinturón'] == c2['Cinturón'] and str(c1['Club']).strip().lower() != str(c2['Club']).strip().lower():
+                
                 dif_edad = abs(c1['Edad'] - c2['Edad'])
                 dif_peso = abs(c1['Peso'] - c2['Peso'])
                 
-                if dif_edad <= 2 and dif_peso <= 5:
+                # REGLA DE EDAD VARIABLE (2 años niños / 10 años adultos) y peso (máx 5kg)
+                if dif_edad <= margen_edad and dif_peso <= 5:
                     if dif_peso < min_dif_peso:
                         min_dif_peso = dif_peso
                         mejor_oponente = c2
@@ -79,19 +82,19 @@ def generar_emparejamientos(df_filtrado, cat_nombre):
             ya_emparejados.add(c1['Nombre'])
             ya_emparejados.add(mejor_oponente['Nombre'])
         else:
+            # Si no hay pareja, se queda solo para edición manual
             luchas.append({"ID_Lucha": len(luchas)+1, "Competidor_1": c1['Nombre'], "Info_1": info1, "VS": "VS", "Competidor_2": "SIN PAREJA", "Info_2": "---", "Categoría": cat_nombre})
             ya_emparejados.add(c1['Nombre'])
             
     return pd.DataFrame(luchas)
 
-# --- MENÚ ---
+# --- NAVEGACIÓN ---
 if st.session_state.active_tab == "INICIO":
     opciones = ["REGISTRO DE COMPETIDORES", "COMPETIDORES INFANTILES", "COMPETIDORES ADULTOS", "EMPAREJAMIENTOS INFANTILES", "EMPAREJAMIENTOS ADULTOS", "RESULTADOS INFANTILES", "RESULTADOS ADULTOS"]
     for op in opciones:
         if st.button(op): 
             st.session_state.active_tab = op
             st.rerun()
-
 else:
     if st.button("VOLVER AL MENÚ"):
         st.session_state.active_tab = "INICIO"
@@ -110,53 +113,49 @@ else:
             e = st.number_input("Edad", 4, 90, 20)
             s = st.selectbox("Estilo", ["BJJ (GI)", "NO-GI"])
             cl = st.text_input("Academia")
-            if st.form_submit_button("GUARDAR"):
-                nueva = pd.DataFrame([{"Número": len(df_comp)+1, "Nombre": n, "Cinturón": c, "Peso": p, "Edad": e, "Estilo": s, "Club": cl}])
+            if st.form_submit_button("GUARDAR REGISTRO"):
+                nueva = pd.DataFrame([{"Número": len(df_comp)+1, "Nombre": n, "Cinturón": c, "Peso": p, "Edad": e, "Estilo": s, "Club": cl, "Resultado": "Pendiente"}])
                 st.session_state.df = pd.concat([df_comp, nueva], ignore_index=True)
                 guardar_datos(st.session_state.df, DB_FILE)
-                st.success("Guardado")
+                st.success("Guardado con éxito")
 
-    # SECCIÓN LISTADOS
+    # SECCIÓN LISTADOS (EDITABLES Y BORRABLES)
     elif st.session_state.active_tab in ["COMPETIDORES INFANTILES", "COMPETIDORES ADULTOS"]:
         es_inf = "INFANTILES" in st.session_state.active_tab
         filt = df_comp[df_comp['Edad'] <= 12] if es_inf else df_comp[df_comp['Edad'] > 12]
         st.markdown(f"<div class='section-title'>{st.session_state.active_tab}</div>", unsafe_allow_html=True)
         editado = st.data_editor(filt, use_container_width=True, hide_index=True, num_rows="dynamic")
-        if st.button("GUARDAR CAMBIOS"):
+        if st.button("💾 GUARDAR CAMBIOS EN LISTA"):
             otros = df_comp[df_comp['Edad'] > 12] if es_inf else df_comp[df_comp['Edad'] <= 12]
             st.session_state.df = pd.concat([otros, editado], ignore_index=True)
             guardar_datos(st.session_state.df, DB_FILE)
-            st.success("Actualizado")
+            st.success("Lista actualizada")
 
-    # SECCIÓN EMPAREJAMIENTOS (LA MAGIA)
+    # SECCIÓN EMPAREJAMIENTOS
     elif st.session_state.active_tab in ["EMPAREJAMIENTOS INFANTILES", "EMPAREJAMIENTOS ADULTOS"]:
         es_inf = "INFANTILES" in st.session_state.active_tab
         cat = "Infantil" if es_inf else "Adulto"
-        st.markdown(f"<div class='section-title'>COMBATES {cat.upper()}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='section-title'>EMPAREJAMIENTOS {cat.upper()}</div>", unsafe_allow_html=True)
         
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🔄 GENERAR AUTOMÁTICO"):
-                df_f = df_comp[df_comp['Edad'] <= 12] if es_inf else df_comp[df_comp['Edad'] > 12]
-                st.session_state.luchas = generar_emparejamientos(df_f, cat)
-                st.success("Cruces generados")
+        if st.button("🔄 GENERAR AUTOMÁTICO"):
+            df_f = df_comp[df_comp['Edad'] <= 12] if es_inf else df_comp[df_comp['Edad'] > 12]
+            st.session_state.luchas = generar_emparejamientos(df_f, cat)
+            st.success(f"Cruces {cat} generados (Margen edad: {2 if es_inf else 10} años)")
         
-        # Mostrar tabla de luchas para editar
         luchas_cat = st.session_state.luchas[st.session_state.luchas['Categoría'] == cat]
         edit_luchas = st.data_editor(luchas_cat, use_container_width=True, hide_index=True, num_rows="dynamic")
         
-        if st.button("💾 GUARDAR CRUCES"):
+        if st.button("💾 GUARDAR COMBATES"):
             otras_luchas = st.session_state.luchas[st.session_state.luchas['Categoría'] != cat]
             st.session_state.luchas = pd.concat([otras_luchas, edit_luchas], ignore_index=True)
             guardar_datos(st.session_state.luchas, LUC_FILE)
-            st.success("Combates guardados")
+            st.success("Emparejamientos guardados")
 
     # SECCIÓN RESULTADOS
     elif "RESULTADOS" in st.session_state.active_tab:
         st.markdown(f"<div class='section-title'>{st.session_state.active_tab}</div>", unsafe_allow_html=True)
-        st.info("Anota aquí los ganadores (1º, 2º, Empate)")
         res_edit = st.data_editor(st.session_state.df, use_container_width=True, hide_index=True)
-        if st.button("GUARDAR PODIO"):
+        if st.button("💾 GUARDAR RESULTADOS"):
             st.session_state.df = res_edit
             guardar_datos(st.session_state.df, DB_FILE)
-            st.success("Resultados guardados")
+            st.success("Resultados guardados en la base de datos")
