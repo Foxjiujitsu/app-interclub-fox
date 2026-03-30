@@ -21,44 +21,62 @@ if 'df' not in st.session_state:
 if 'active_tab' not in st.session_state:
     st.session_state.active_tab = "INICIO"
 
-# --- DISEÑO COMPACTO PARA MÓVIL ---
+# --- DISEÑO MÓVIL CENTRADO Y SIMÉTRICO ---
 st.markdown("""
     <style>
-    /* Fondo Blanco y eliminación de espacios */
+    /* Fondo Blanco */
     .stApp { background-color: #FFFFFF; color: #333333; }
-    .main .block-container { padding-top: 10px !important; padding-bottom: 10px !important; }
     
-    /* Imagen del logo compacta */
-    .logo-container { text-align: center; margin-bottom: 10px; }
-    .logo-img { width: 180px; }
+    /* Centrar todo el contenido */
+    .block-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 20px !important;
+    }
 
-    /* Botones Estilo Celular Compactos */
+    /* Contenedor del Logo */
+    .logo-container { text-align: center; margin-bottom: 20px; width: 100%; }
+    .logo-img { width: 220px; }
+
+    /* Estilo de Botones IGUALES y CENTRADOS */
+    div.stButton {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
     div.stButton > button {
         background-color: #ffffff !important;
         color: #333333 !important;
         border: 1.5px solid #666666 !important;
-        border-radius: 20px !important;
-        height: 42px !important; /* Altura reducida para que quepan todos */
+        border-radius: 25px !important;
+        
+        /* MEDIDAS FIJAS PARA SIMETRÍA */
+        width: 300px !important; 
+        height: 45px !important;
+        
         font-weight: bold !important;
-        font-size: 13px !important; /* Texto más pequeño */
+        font-size: 13px !important;
         text-transform: uppercase;
-        width: 100%;
-        margin-bottom: 2px !important;
-        padding: 0px !important;
+        margin-bottom: 8px !important;
+        transition: all 0.3s;
     }
     
     div.stButton > button:hover {
         border-color: #ff6b00 !important;
         color: #ff6b00 !important;
+        background-color: #fffaf7 !important;
     }
 
     /* Títulos de secciones */
     .section-title {
         color: #ff6b00;
-        font-size: 18px;
+        font-size: 20px;
         font-weight: bold;
         text-align: center;
-        margin-bottom: 10px;
+        margin: 15px 0;
     }
 
     /* Ocultar elementos de Streamlit */
@@ -66,11 +84,11 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- CABECERA CON TU LOGO DE GITHUB ---
+# --- CABECERA ---
 st.markdown(f"""
     <div class="logo-container">
         <img src="https://raw.githubusercontent.com/Foxjiujitsu/app-interclub-fox/main/fox-letras-naranja.PNG" class="logo-img">
-        <p style="font-weight: bold; color: #333; font-size: 12px; margin-top: 5px; text-transform: uppercase; letter-spacing: 2px;">
+        <p style="font-weight: bold; color: #333; font-size: 14px; margin-top: 5px; text-transform: uppercase; letter-spacing: 2px;">
             Sistema de Competición
         </p>
     </div>
@@ -78,22 +96,20 @@ st.markdown(f"""
 
 df = st.session_state.df
 
-# --- MENÚ DE BOTONES (Uno debajo de otro) ---
+# --- MENÚ DE BOTONES (CENTRADO) ---
 if st.session_state.active_tab == "INICIO":
-    col1, col2, col3 = st.columns([0.1, 0.8, 0.1])
-    with col2:
-        if st.button("📝 REGISTRO DE COMPETIDORES"): st.session_state.active_tab = "REGISTRO"
-        if st.button("👶 COMPETIDORES INFANTILES"): st.session_state.active_tab = "INFANTILES"
-        if st.button("🥷 COMPETIDORES ADULTOS"): st.session_state.active_tab = "ADULTOS"
-        if st.button("🔗 EMPAREJAMIENTOS INFANTILES"): st.session_state.active_tab = "EMP_INF"
-        if st.button("⛓️ EMPAREJAMIENTOS ADULTOS"): st.session_state.active_tab = "EMP_ADU"
-        if st.button("🏆 RESULTADOS INFANTILES"): st.session_state.active_tab = "RES_INF"
-        if st.button("🥇 RESULTADOS ADULTOS"): st.session_state.active_tab = "RES_ADU"
+    # Usamos botones simples, el CSS se encarga de centrarlos y darles el tamaño fijo
+    if st.button("📝 REGISTRO DE COMPETIDORES"): st.session_state.active_tab = "REGISTRO"
+    if st.button("👶 COMPETIDORES INFANTILES"): st.session_state.active_tab = "INFANTILES"
+    if st.button("🥷 COMPETIDORES ADULTOS"): st.session_state.active_tab = "ADULTOS"
+    if st.button("🔗 EMPAREJAMIENTOS INFANTILES"): st.session_state.active_tab = "EMP_INF"
+    if st.button("⛓️ EMPAREJAMIENTOS ADULTOS"): st.session_state.active_tab = "EMP_ADU"
+    if st.button("🏆 RESULTADOS INFANTILES"): st.session_state.active_tab = "RES_INF"
+    if st.button("🥇 RESULTADOS ADULTOS"): st.session_state.active_tab = "RES_ADU"
 
 # --- LÓGICA DE SECCIONES ---
 else:
-    # Botón flotante para volver arriba
-    if st.button("⬅️ VOLVER AL MENÚ PRINCIPAL"):
+    if st.button("⬅️ VOLVER AL MENÚ"):
         st.session_state.active_tab = "INICIO"
         st.rerun()
     
@@ -118,11 +134,11 @@ else:
         es_inf = st.session_state.active_tab == "INFANTILES"
         filt = df[df['Edad'] <= 12] if es_inf else df[df['Edad'] > 12]
         st.markdown(f"<div class='section-title'>LISTADO {'INFANTIL' if es_inf else 'ADULTO'}</div>", unsafe_allow_html=True)
-        st.dataframe(filt[["Número", "Nombre", "Cinturón", "Peso", "Club"]], use_container_width=True)
+        st.dataframe(filt[["Número", "Nombre", "Cinturón", "Peso", "Club"]], use_container_width=True, hide_index=True)
 
     elif st.session_state.active_tab in ["EMP_INF", "EMP_ADU", "RES_INF", "RES_ADU"]:
         st.markdown("<div class='section-title'>GESTIÓN DE DATOS</div>", unsafe_allow_html=True)
-        ed_df = st.data_editor(df, use_container_width=True)
+        ed_df = st.data_editor(df, use_container_width=True, hide_index=True)
         if st.button("💾 GUARDAR CAMBIOS"):
             st.session_state.df = ed_df
             guardar_datos(ed_df)
