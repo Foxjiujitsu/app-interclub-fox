@@ -2,89 +2,126 @@ import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# Configuración FOX
+# --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="INTERCLUB FOX", page_icon="🦊", layout="centered")
 
-# --- DISEÑO CORPORATIVO NEGRO Y NARANJA MEJORADO ---
+# --- DISEÑO CORPORATIVO NEGRO Y NARANJA DEFINITIVO ---
 st.markdown("""
     <style>
-    /* Fondo principal en negro */
-    .stApp {
-        background-color: #000000;
-        color: #FFFFFF;
+    /* 1. Fondo principal y textos base */
+    .stApp { 
+        background-color: #000000; 
+        color: #FFFFFF; 
+        font-family: 'Arial', sans-serif; 
+    }
+    h1, h2, h3, p, span, label { color: #FFFFFF !important; }
+
+    /* 2. Cabecera Centrada Totalmente */
+    .stImage > img { 
+        display: block; 
+        margin-left: auto; 
+        margin-right: auto; 
     }
     
-    /* Estilo para los títulos y textos */
-    h1, h2, h3, p, span, label {
-        color: #FFFFFF !important;
+    /* Forzar centrado de bloques verticales */
+    [data-testid="stVerticalBlock"] {
+        align-items: center;
     }
 
-    /* Botón "¡REGISTRARME!" en Naranja */
-    .stButton>button {
-        background-color: #FF6B00; /* Naranja FOX */
-        color: white;
-        border-radius: 10px;
-        border: none;
-        height: 3.5em;
-        width: 100%;
-        font-weight: bold;
-        font-size: 20px;
-        transition: 0.3s;
+    /* 3. Títulos */
+    .interclub-titulo { 
+        text-align: center; 
+        color: #FF6B00; 
+        font-size: 50px; 
+        font-weight: bold; 
+        margin-top: -10px; 
     }
-    .stButton>button:hover {
-        background-color: #CC5500;
-        border: 1px solid white;
+    .registro-subtitulo { 
+        text-align: center; 
+        font-size: 18px; 
+        color: #888888; 
+        margin-bottom: 20px; 
     }
 
-    /* Pestañas (Tabs) */
-    button[data-baseweb="tab"] {
-        color: #888888 !important;
+    /* 4. Pestañas (Tabs) */
+    button[data-baseweb="tab"] { 
+        color: #888888 !important; 
+        font-weight: bold; 
     }
-    button[aria-selected="true"] {
-        color: #FF6B00 !important;
-        border-bottom-color: #FF6B00 !important;
+    button[aria-selected="true"] { 
+        color: #FFFFFF !important; 
+        border-bottom: 3px solid #FF6B00 !important; 
     }
 
-    /* Estilo de los cuadros de entrada (Inputs) */
-    input, select, textarea {
+    /* 5. Contenedor del Formulario */
+    [data-testid="stForm"] { 
+        border: 2px solid #FF6B00; 
+        border-radius: 15px; 
+        background-color: #0A0A0A; 
+        padding: 25px; 
+    }
+
+    /* 6. Campos de Entrada (Inputs) - SIN DOBLE RECUADRO */
+    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"], .stTextArea textarea {
         background-color: #1A1A1A !important;
-        color: white !important;
-        border: 1px solid #FF6B00 !important; /* CORRECCIÓN: Bordes Naranjas */
+        color: #FFFFFF !important;
+        border: 1px solid #FF6B00 !important;
+        border-radius: 8px !important;
     }
 
-    /* El contenedor del formulario */
-    [data-testid="stForm"] {
-        border: 2px solid #FF6B00; /* CORRECCIÓN: Borde Naranja */
-        border-radius: 15px;
-        background-color: #0A0A0A;
-        padding: 20px;
+    /* 7. Radio Button (BJJ / NO-GI) en NARANJA */
+    div[data-testid="stMarkdownContainer"] p { color: white !important; }
+    label[data-baseweb="radio"] div:first-child { border-color: #FF6B00 !important; }
+    label[data-baseweb="radio"][aria-checked="true"] div:first-child { 
+        background-color: #FF6B00 !important; 
+        border-color: #FF6B00 !important; 
+    }
+
+    /* 8. Botón REGISTRARME (Naranja/Negro -> Negro/Naranja) */
+    .stButton > button {
+        background-color: #FF6B00 !important;
+        color: #000000 !important;
+        border: 2px solid #FF6B00 !important;
+        border-radius: 10px !important;
+        font-weight: bold !important;
+        font-size: 20px !important;
+        height: 3em !important;
+        width: 100% !important;
+        transition: 0.3s !important;
+    }
+    .stButton > button:hover {
+        background-color: #000000 !important;
+        color: #FF6B00 !important;
+        border-color: #FF6B00 !important;
+    }
+
+    /* Tarjetas informativas */
+    .fox-card { 
+        border: 1px solid #FF6B00; 
+        border-radius: 10px; 
+        background-color: #1A1A1A; 
+        padding: 20px; 
+        text-align: center; 
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- CABECERA CENTRADA Y LOGOS GRANDES ---
-# Usamos columnas para forzar el centrado
-col_main, col_fix = st.columns([1, 10]) # Pequeño desajuste para centrado óptimo
+# --- CABECERA ---
+st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=180)
+st.image("fox-letras-naranja.PNG", width=380)
 
-with col_fix:
-    # 1. El dibujo del zorro centrado (Imagen de WhatsApp...)
-    st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=180) # Centrado y grande
-    
-    # 2. El logo de letras FOX más grande (fox-letras-naranja...)
-    st.image("fox-letras-naranja.PNG", width=350) # Muy grande
-
-# 3. Título Centrado: Solo "INTERCLUB"
-st.markdown("<h1 style='text-align: center; color: #FF6B00; font-size: 40px;'>INTERCLUB</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 20px; color: white;'>Registro Oficial de Competidores</p>", unsafe_allow_html=True)
+st.markdown("<div class='interclub-titulo'>INTERCLUB</div>", unsafe_allow_html=True)
+st.markdown("<div class='registro-subtitulo'>Registro Oficial de Competidores</div>", unsafe_allow_html=True)
 
 # --- PESTAÑAS ---
-tab1, tab2, tab3 = st.tabs(["📝 Inscripción", "⚔️ Cruces", "🏆 Resultados"])
+tab1, tab2, tab3, tab4 = st.tabs(["📝 Inscripción", "⚔️ Cruces", "🏆 Resultados", "📸 Fotografías"])
 
 with tab1:
     conn = st.connection("gsheets", type=GSheetsConnection)
     
     with st.form("registro_fox", clear_on_submit=True):
-        st.markdown("<h3 style='color: #FF6B00;'>Datos del Guerrero</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color: #FF6B00; border-bottom: 1px solid #FF6B00;'>Datos del Competidor</h3>", unsafe_allow_html=True)
+        
         nombre = st.text_input("Nombre Completo")
         
         c1, c2 = st.columns(2)
@@ -92,12 +129,11 @@ with tab1:
             edad = st.number_input("Edad", 4, 80, step=1)
             cinturon = st.selectbox("Cinturón", ["Blanco", "Azul", "Morado", "Marrón", "Negro"])
         with c2:
-            peso = st.text_input("Peso (ej. -76kg o Leve)")
+            peso = st.text_input("Peso (ej. -76kg)")
             estilo = st.radio("Modalidad", ["BJJ (Gi)", "NO-GI"])
             
         academia = st.text_input("Academia / Equipo")
         
-        # El botón de acción
         enviar = st.form_submit_button("¡REGISTRARME!")
 
         if enviar:
@@ -114,17 +150,18 @@ with tab1:
                     }])
                     actualizado = pd.concat([df, nuevo], ignore_index=True)
                     conn.update(data=actualizado)
-                    st.success(f"¡Oss {nombre}! Tu inscripción se ha guardado correctamente.")
+                    st.success(f"¡Oss {nombre}! Registro enviado.")
                     st.balloons()
-                except Exception as e:
-                    st.error("Error al conectar con el Excel. Revisa los permisos.")
+                except:
+                    st.error("Error al conectar con la base de datos.")
             else:
-                st.warning("Completa nombre y academia para continuar.")
+                st.warning("Rellena los campos obligatorios.")
 
 with tab2:
-    st.markdown("<h2 style='color: #FF6B00;'>⚔️ Próximos Combates</h2>", unsafe_allow_html=True)
-    st.write("Los emparejamientos se publicarán aquí cuando se cierren las inscripciones.")
+    st.markdown("<div class='fox-card'><h3 style='color:#FF6B00'>⚔️ Cruces</h3><p>Se publicarán al cierre de inscripciones.</p></div>", unsafe_allow_html=True)
 
 with tab3:
-    st.markdown("<h2 style='color: #FF6B00;'>🏆 Resultados Finales</h2>", unsafe_allow_html=True)
-    st.write("Podios y fotos disponibles al terminar el interclub.")
+    st.markdown("<div class='fox-card'><h3 style='color:#FF6B00'>🏆 Resultados</h3><p>Disponibles tras el evento.</p></div>", unsafe_allow_html=True)
+
+with tab4:
+    st.markdown("<div class='fox-card'><h3 style='color:#FF6B00'>📸 Fotografías</h3><p>Aquí subiremos los enlaces para descargar las fotos oficiales del Interclub.</p></div>", unsafe_allow_html=True)
