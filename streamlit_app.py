@@ -5,55 +5,17 @@ import pandas as pd
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="INTERCLUB FOX", page_icon="🦊", layout="centered")
 
-# --- CSS RADICAL Y DEFINITIVO ---
+# --- DISEÑO RADICAL (TEXTO NEGRO SOBRE BOTÓN NARANJA) ---
 st.markdown("""
     <style>
-    /* 1. Fondo y Textos Base */
-    .stApp { background-color: #000000 !important; color: #FFFFFF !important; }
+    .stApp { background-color: #000000; color: #FFFFFF; }
     
-    /* 2. OCULTAR ELEMENTOS INNECESARIOS */
-    #MainMenu, header, footer {visibility: hidden;}
-    .stDeployButton {display:none;}
+    /* Centrado de imágenes */
+    .stImage { display: flex; justify-content: center; }
 
-    /* 3. CENTRADO ABSOLUTO DE LOGOS */
-    /* Este bloque fuerza a que cualquier imagen o bloque de imagen se centre sí o sí */
-    [data-testid="stImage"], .stImage, [data-testid="stVerticalBlock"] > div:has(img) {
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        text-align: center !important;
-        width: 100% !important;
-    }
-    .stImage img {
-        display: block !important;
-        margin: 0 auto !important;
-    }
-
-    /* 4. TEXTOS DE ETIQUETAS (Usuario, Contraseña...) */
-    /* Forzamos blanco puro para que no salgan grises */
-    label, .stMarkdown p, [data-testid="stWidgetLabel"] p {
-        color: #FFFFFF !important;
-        font-weight: bold !important;
-        font-size: 1.1rem !important;
-        opacity: 1 !important;
-    }
-
-    /* 5. INPUTS (Corrección de doble línea y color) */
-    .stTextInput input, .stPasswordInput input {
-        background-color: #1A1A1A !important;
-        color: #FFFFFF !important;
-        border: 2px solid #FF6B00 !important;
-        border-radius: 10px !important;
-        /* Eliminamos sombras internas que crean el efecto de doble línea */
-        box-shadow: none !important;
-        -webkit-appearance: none !important;
-    }
-
-    /* 6. BOTÓN INICIAR SESIÓN (EL FALLO MÁS REPETIDO) */
-    /* Atacamos directamente el botón de formulario de Streamlit */
-    button[kind="primaryFormSubmit"], .stButton > button {
+    /* Forzar visibilidad del botón de INICIAR SESIÓN */
+    /* Lo ponemos naranja con letras negras gruesas */
+    div.stButton > button:first-child {
         background-color: #FF6B00 !important;
         color: #000000 !important;
         border: none !important;
@@ -61,52 +23,85 @@ st.markdown("""
         font-size: 1.2rem !important;
         height: 3.5em !important;
         width: 100% !important;
-        opacity: 1 !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
     }
-    
-    /* Forzamos que el texto dentro del botón sea NEGRO */
-    button[kind="primaryFormSubmit"] p, .stButton > button p {
+    div.stButton > button:first-child p {
         color: #000000 !important;
         font-weight: 900 !important;
     }
 
-    /* 7. BOTÓN REGISTRO (Abajo del formulario) */
-    [data-testid="stForm"] + div .stButton button {
-        background-color: #FF6B00 !important;
-        color: #000000 !important;
-        border: none !important;
-        margin-top: 20px !important;
+    /* Inputs con bordes naranjas */
+    .stTextInput input, .stPasswordInput input {
+        background-color: #1A1A1A !important;
+        color: #FFFFFF !important;
+        border: 2px solid #FF6B00 !important;
     }
+    
+    /* Ocultar iconos de enlace y basura de Streamlit */
+    header, footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- CABECERA DE LOGOS ---
-# Usamos un contenedor vacío para ayudar al centrado
-st.write("") 
-st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=150)
-st.image("fox-letras-naranja.PNG", width=350)
+# --- CONTROL DE NAVEGACIÓN (SESSION STATE) ---
+if 'logueado' not in st.session_state:
+    st.session_state.logueado = False
 
-# Título centrado sin icono de enlace
-st.markdown("<h1 style='text-align: center; color: white; margin-top: -10px;'>Acceso Interclub</h1>", unsafe_allow_html=True)
-
-# --- FORMULARIO ---
-if 'autenticado' not in st.session_state:
-    st.session_state['autenticado'] = False
-
-with st.form("login_oficial"):
-    u = st.text_input("Usuario o Email")
-    p = st.text_input("Contraseña", type="password")
-    submit = st.form_submit_button("INICIAR SESIÓN")
+# --- PANTALLA 1: ACCESO ---
+if not st.session_state.logueado:
     
-    if submit:
-        if u == "Fox-Interclub" and p == "Interclub-Fox-2026":
-            st.session_state['autenticado'] = True
-            st.success("Acceso concedido")
-        else:
-            st.error("Credenciales incorrectas")
+    # Centrado usando columnas vacías a los lados
+    col1, col_centro, col2 = st.columns([1, 2, 1])
+    
+    with col_centro:
+        st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=150)
+        st.image("fox-letras-naranja.PNG", width=300)
+        st.markdown("<h2 style='text-align: center;'>Acceso Interclub</h2>", unsafe_allow_html=True)
+        
+        with st.form("login_oficial"):
+            u = st.text_input("Usuario o Email")
+            p = st.text_input("Contraseña", type="password")
+            btn_entrar = st.form_submit_button("INICIAR SESIÓN")
+            
+            if btn_entrar:
+                if u == "Fox-Interclub" and p == "Interclub-Fox-2026":
+                    st.session_state.logueado = True
+                    st.rerun() # ESTO es lo que te lleva a la página interior
+                else:
+                    st.error("Credenciales incorrectas")
 
-# --- BOTÓN REGISTRO ---
-st.button("¿AÚN NO ESTÁS INSCRITO? REGÍSTRATE AQUÍ")
+    st.markdown("---")
+    st.button("¿AÚN NO ESTÁS INSCRITO? REGÍSTRATE AQUÍ")
+
+# --- PANTALLA 2: INTERIOR (PANEL ORGANIZADOR) ---
+else:
+    # Barra lateral para salir
+    with st.sidebar:
+        st.image("Imagen de WhatsApp 2024-11-27 a las 14.43.24_bca11eec.jpg", width=100)
+        if st.button("Cerrar Sesión"):
+            st.session_state.logueado = False
+            st.rerun()
+
+    st.markdown("<h1 style='color: #FF6B00;'>PANEL ORGANIZADOR</h1>", unsafe_allow_html=True)
+    
+    # Aquí están las pestañas que pediste
+    tab1, tab2, tab3, tab4 = st.tabs(["📊 Inscritos", "⚔️ Cruces", "🏆 Resultados", "📸 Fotos"])
+
+    with tab1:
+        st.subheader("Gestión de Fichas de Alumnos")
+        try:
+            conn = st.connection("gsheets", type=GSheetsConnection)
+            df = conn.read()
+            st.data_editor(df, num_rows="dynamic") # Aquí puedes editar inscritos directamente
+        except:
+            st.error("Conecta tu Google Sheet en los Secrets.")
+
+    with tab2:
+        st.subheader("Configuración de Cruces")
+        st.info("Aquí podrás diseñar las llaves de los combates.")
+
+    with tab3:
+        st.subheader("Resultados del Evento")
+        st.write("Registra los ganadores de cada llave.")
+
+    with tab4:
+        st.subheader("Galería de Fotos")
+        st.write("Sube o enlaza las fotos del Interclub aquí.")
