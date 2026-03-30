@@ -10,7 +10,7 @@ DB_FILE = "competidores.csv"
 def cargar_datos():
     if os.path.exists(DB_FILE):
         return pd.read_csv(DB_FILE)
-    return pd.DataFrame(columns=["Número", "Nombre", "Cinturón", "Peso", "Edad", "Club"])
+    return pd.DataFrame(columns=["Número", "Nombre", "Cinturón", "Peso", "Edad", "Estilo", "Club"])
 
 def guardar_datos(df):
     df.to_csv(DB_FILE, index=False)
@@ -29,22 +29,22 @@ st.markdown("""
     
     /* Forzar centrado de la columna principal */
     .main .block-container {
-        max-width: 400px; /* Ancho típico de un móvil */
+        max-width: 400px; 
         margin: 0 auto;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        padding-top: 30px !important;
+        padding-top: 20px !important;
     }
 
     /* Logo centrado */
     .logo-container { 
         text-align: center; 
-        margin-bottom: 25px; 
+        margin-bottom: 20px; 
         width: 100%; 
     }
-    .logo-img { width: 220px; }
+    .logo-img { width: 200px; }
 
     /* Contenedor de botones centrado */
     .element-container, .stButton {
@@ -62,12 +62,12 @@ st.markdown("""
         
         /* MEDIDAS FIJAS */
         width: 280px !important; 
-        height: 48px !important;
+        height: 46px !important;
         
         font-weight: bold !important;
-        font-size: 14px !important;
+        font-size: 13px !important;
         text-transform: uppercase;
-        margin-bottom: 5px !important;
+        margin-bottom: 4px !important;
         display: block !important;
         transition: all 0.2s;
     }
@@ -78,13 +78,13 @@ st.markdown("""
         background-color: #fffaf7 !important;
     }
 
-    /* Títulos de secciones */
+    /* Estilo de la tabla y textos */
     .section-title {
         color: #ff6b00;
-        font-size: 20px;
+        font-size: 18px;
         font-weight: bold;
         text-align: center;
-        margin: 10px 0;
+        margin-bottom: 15px;
     }
 
     /* Ocultar elementos de Streamlit */
@@ -96,7 +96,7 @@ st.markdown("""
 st.markdown(f"""
     <div class="logo-container">
         <img src="https://raw.githubusercontent.com/Foxjiujitsu/app-interclub-fox/main/fox-letras-naranja.PNG" class="logo-img">
-        <p style="font-weight: bold; color: #333; font-size: 14px; margin-top: 5px; text-transform: uppercase; letter-spacing: 2px;">
+        <p style="font-weight: bold; color: #333; font-size: 12px; margin-top: 5px; text-transform: uppercase; letter-spacing: 2px;">
             Sistema de Competición
         </p>
     </div>
@@ -104,7 +104,7 @@ st.markdown(f"""
 
 df = st.session_state.df
 
-# --- MENÚ DE BOTONES (SIN ICONOS Y CENTRADOS) ---
+# --- MENÚ DE BOTONES ---
 if st.session_state.active_tab == "INICIO":
     if st.button("REGISTRO DE COMPETIDORES"): st.session_state.active_tab = "REGISTRO"
     if st.button("COMPETIDORES INFANTILES"): st.session_state.active_tab = "INFANTILES"
@@ -125,17 +125,23 @@ else:
     if st.session_state.active_tab == "REGISTRO":
         st.markdown("<div class='section-title'>NUEVO REGISTRO</div>", unsafe_allow_html=True)
         with st.form("form_reg", clear_on_submit=True):
-            nom = st.text_input("Nombre")
+            nom = st.text_input("Nombre y Apellidos")
             cin = st.selectbox("Cinturón", ["Blanco", "Gris", "Amarillo", "Naranja", "Verde", "Azul", "Morado", "Marrón", "Negro"])
-            pes = st.number_input("Peso (kg)", 5.0, 150.0, 40.0)
-            eda = st.number_input("Edad", 4, 90, 10)
-            clu = st.text_input("Academia")
-            if st.form_submit_button("GUARDAR"):
-                num = len(df) + 1
-                nueva = pd.DataFrame([{"Número": num, "Nombre": nom, "Cinturón": cin, "Peso": pes, "Edad": eda, "Club": clu}])
-                st.session_state.df = pd.concat([st.session_state.df, nueva], ignore_index=True)
-                guardar_datos(st.session_state.df)
-                st.success("¡Registrado!")
+            pes = st.number_input("Peso (kg)", 5.0, 150.0, 70.0)
+            eda = st.number_input("Edad", 4, 90, 20)
+            # AQUI ESTA EL CAMPO QUE FALTABA:
+            est = st.selectbox("Estilo", ["BJJ (GI)", "NO-GI"])
+            clu = st.text_input("Academia / Club")
+            
+            if st.form_submit_button("GUARDAR REGISTRO"):
+                if nom and clu:
+                    num = len(df) + 1
+                    nueva = pd.DataFrame([{"Número": num, "Nombre": nom, "Cinturón": cin, "Peso": pes, "Edad": eda, "Estilo": est, "Club": clu}])
+                    st.session_state.df = pd.concat([st.session_state.df, nueva], ignore_index=True)
+                    guardar_datos(st.session_state.df)
+                    st.success(f"¡Registrado! Nº {num}")
+                else:
+                    st.error("Por favor rellena Nombre y Academia")
 
     elif st.session_state.active_tab in ["INFANTILES", "ADULTOS"]:
         es_inf = st.session_state.active_tab == "INFANTILES"
@@ -149,4 +155,4 @@ else:
         if st.button("GUARDAR CAMBIOS"):
             st.session_state.df = ed_df
             guardar_datos(ed_df)
-            st.success("Guardado")
+            st.success("Cambios guardados correctamente")
